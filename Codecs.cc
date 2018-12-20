@@ -211,6 +211,9 @@ vector<FeatureMap> Codecs::DecodeVideo()
     avcodec_register_all();
     av_register_all();
 
+    // return all frames
+    vector<FeatureMap> output;
+
     AVFormatContext* pFormatCtx = avformat_alloc_context();
 
     if (avformat_open_input(&pFormatCtx, this->fileName.c_str(), NULL, NULL)!=0)
@@ -282,7 +285,7 @@ vector<FeatureMap> Codecs::DecodeVideo()
     }
 
     int response = 0;
-
+    FrameResponse frameResponse;
     // fill the Packet with data from the Stream
     // https://ffmpeg.org/doxygen/trunk/group__lavf__decoding.html#ga4fdb3084415a82e3810de6ee60e46a61
     while (av_read_frame(pFormatCtx, pPacket) >= 0)
@@ -290,17 +293,17 @@ vector<FeatureMap> Codecs::DecodeVideo()
         // if it's the video stream
         if (pPacket->stream_index == video_stream_index) 
         {
-            cout<<"AVPacket->pts "<< pPacket->pts;
-            response = this->DecodeFrame(pPacket, pCodecContext, pFrame);
+            cout<<"AVPacket->pts "<<pPacket->pts;
+            frameResponse = this->DecodeFrame(pPacket, pCodecContext, pFrame);
             
-            if (response < 0)
+            if (frameResponse.response < 0)
                 break;
         }
         // https://ffmpeg.org/doxygen/trunk/group__lavc__packet.html#ga63d5a489b419bd5d45cfd09091cbcbc2
         av_packet_unref(pPacket);
     }
 
-    response = this->DecodeFrame(nullptr, pCodecContext, pFrame);
+    frameResponse = this->DecodeFrame(nullptr, pCodecContext, pFrame);
     avformat_close_input(&pFormatCtx);
     avformat_free_context(pFormatCtx);
     av_packet_free(&pPacket);
@@ -341,56 +344,29 @@ FrameResponse Codecs::DecodeFrame(AVPacket *pPacket, AVCodecContext *pCodecConte
     if (frameResponse.response >= 0) 
     {
         cout<<"Frame "<<pCodecContext->frame_number<<endl;
-    //   cout<<"Pict Type"<<av_get_picture_type_char(pFrame->pict_type)<<endl;
-    //   cout<<"Pkt Size "<<pFrame->pkt_size<<endl;
-    //   cout<<"Pts "<<pFrame->pts<<endl;
-    //   cout<<"Key Frames "<<pFrame->coded_picture_number<<endl;
 
-    char frame_filename[1024];
-    snprintf(frame_filename, sizeof(frame_filename), "%s-%d.pgm", "frame", pCodecContext->frame_number);
-    // save a grayscale frame into a .pgm file
-    save_gray_frame(pFrame->data[0], pFrame->linesize[0], pFrame->width, pFrame->height, frame_filename);
+        char frame_filename[1024];
+        snprintf(frame_filename, sizeof(frame_filename), "%s-%d.pgm", "frame", pCodecContext->frame_number);
+        // save a grayscale frame into a .pgm file
+        save_gray_frame(pFrame->data[0], pFrame->linesize[0], pFrame->width, pFrame->height, frame_filename);
     
-    // add pFrame to frameResponse variable
-    vector<int> buf; 
-    for(int i =0 ;i<pFrame->height; i++)
-        {
-            for(int j=0; j<pFrame->width; j++)
+        // add pFrame to frameResponse variable
+        vector<int> buf; 
+        for(int i =0 ;i<pFrame->height; i++)
             {
-                buf.push_back(pFrame->data[0][j + i*pFrame->linesize[0]]);
+                for(int j=0; j<pFrame->width; j++)
+                {
+                    buf.push_back(pFrame->data[0][j + i*pFrame->linesize[0]]);
+                }
             }
-        }
-    
-    frameResponse.frames.push_back(FeatureMap(buf, pFrame->height, pFrame->width, q_min, q_max));
+        
+        frameResponse.frames.push_back(FeatureMap(buf, pFrame->height, pFrame->width, q_min, q_max));
 
-    // get pFrame into
-    cout<<"LinSize :"<<pFrame->linesize[0]<<" "<<pFrame->linesize[1]<<" "<<pFrame->linesize[2]<<endl; 
-    cout<<"Height :"<<pFrame->height<<" "<<pFrame->width<<endl; 
-    
-    vector<int> Y;
-    
-    cout<<"Y ";
-    for(int i=0; i<pFrame->height; i++)
-        {
-            for(int j=0; j<pFrame->width; j++)
-            {
-                Y.push_back(pFrame->data[0][i*pFrame->linesize[0] + j]);
-            }
-        }
+        // get pFrame into
+        // cout<<"LinSize :"<<pFrame->linesize[0]<<" "<<pFrame->linesize[1]<<" "<<pFrame->linesize[2]<<endl; 
+        // cout<<"Height :"<<pFrame->height<<" "<<pFrame->width<<endl; 
 
-            
-    // cout<<endl<<"U: "<<endl;
-    // vector<double> U, V;
-    // for(int i=0; i<pFrame->height/2 ; i++)
-    //     {   
-    //         for(int j=0; j<pFrame->width/2; j++)
-    //         {
-    //             U.push_back(pFrame->data[1][i*pFrame->linesize[1] + j]);
-    //             // cout<<U[i*j]<<" ";
-    //         }
-    //     }
-
-    av_frame_unref(pFrame);
+        av_frame_unref(pFrame);
     
     }
   }
