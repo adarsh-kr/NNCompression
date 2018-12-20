@@ -31,10 +31,30 @@ py::array_t<double> compress(py::array_t<double> data, double q_min, double q_ma
     cout<<"Q_Max"<<q_max<<endl;
     cout<<allFrames.size()<<endl;
     
-    Codecs codecData(allFrames, height, width, batch, fileName);
+    Codecs codecData(allFrames, height, width, q_min, q_max, batch, fileName);
     codecData.EncodeVideo();
-    codecData.DecodeVideo();
-    return data; 
+    vector<FeatureMap> out = codecData.DecodeVideo();
+    
+    py::array_t<double> finalOutput = py::array_t<double>(batch*height*width);
+    py::buffer_info outBuf =  finalOutput.request();
+    double *outDataPtr = (double *) outBuf.ptr;
+
+
+    for(int i=0; i<out.size(); i++)
+    {   
+        // convert yuv to grayscale
+        out[i].ConvertYUV2GrayScale();
+        // convert grayscale to tensor
+        out[i].ConvertGrayScale2Tensor();
+
+        // finalOutput.insert(finalOutput.end(), out[i].tensor.begin(), out[i].tensor.end());
+        for(int j=0; j<out[i].tensor.size(); j++)
+            {
+                outDataPtr[i*height*width + j] = out[i].tensor[j];     
+            }
+    }
+    
+    return finalOutput; 
 }
 
 PYBIND11_PLUGIN(wrap) {

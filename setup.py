@@ -8,7 +8,7 @@ cpp_link_args = [ '-lavcodec', '-lavutil', '-lavformat', '-lswscale']
 ext_modules = [
     Extension(
     'wrap',
-        ['funcs.cpp', 'wrap.cc', 'FeatureMap.cc', 'Codecs.cc'],
+        [ 'wrap.cc', 'FeatureMap.cc', 'Codecs.cc'],
         include_dirs=['/usr/local/include/python3.6', '/usr/include/python3.6m', '/home/adarsh/.local/include/python3.6m'],
         language='c++',
         extra_compile_args = cpp_args,

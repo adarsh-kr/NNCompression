@@ -34,14 +34,6 @@ void save_gray_frame(unsigned char *buf, int wrap, int xsize, int ysize, char *f
     fclose(f);
 }
 
-
-struct FrameResponse
-{
-    vector<FeatureMap> frames;
-    int response;
-};
-
-
 Codecs::Codecs()
 {
 
@@ -295,6 +287,7 @@ vector<FeatureMap> Codecs::DecodeVideo()
         {
             cout<<"AVPacket->pts "<<pPacket->pts;
             frameResponse = this->DecodeFrame(pPacket, pCodecContext, pFrame);
+            output.insert(output.end(), frameResponse.frames.begin(), frameResponse.frames.end());
             
             if (frameResponse.response < 0)
                 break;
@@ -304,13 +297,15 @@ vector<FeatureMap> Codecs::DecodeVideo()
     }
 
     frameResponse = this->DecodeFrame(nullptr, pCodecContext, pFrame);
+    output.insert(output.end(), frameResponse.frames.begin(), frameResponse.frames.end());
+    
     avformat_close_input(&pFormatCtx);
     avformat_free_context(pFormatCtx);
     av_packet_free(&pPacket);
     av_frame_free(&pFrame);
     avcodec_free_context(&pCodecContext);
 
-    vector<FeatureMap> out;
+    return output;
 }
 
 FrameResponse Codecs::DecodeFrame(AVPacket *pPacket, AVCodecContext *pCodecContext, AVFrame *pFrame)
