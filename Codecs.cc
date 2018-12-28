@@ -71,7 +71,7 @@ void Codecs::EncodeFrame(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt,
             exit(1);
         }
         
-        printf("encoded frame %3"PRId64" (size=%5d)\n", pkt->pts, pkt->size);
+        // printf("encoded frame %3"PRId64" (size=%5d)\n", pkt->pts, pkt->size);
         fwrite(pkt->data, 1, pkt->size, outfile);
         // stream>>pkt->data;
         av_packet_unref(pkt);
@@ -141,7 +141,7 @@ void Codecs::EncodeVideo()
     picture->height = c->height;
     
 
-    cout<<"!Encoder : Linsize"<<picture->linesize[0]<<" "<<picture->linesize[1]<<" "<<picture->linesize[2]<<" "<<picture->height<<" "<<picture->width<<endl;
+    // cout<<"!Encoder : Linsize"<<picture->linesize[0]<<" "<<picture->linesize[1]<<" "<<picture->linesize[2]<<" "<<picture->height<<" "<<picture->width<<endl;
     int ret = av_frame_get_buffer(picture, 32);
     if (ret < 0) {
         cerr<<"could not alloc the frame data\n";
@@ -161,7 +161,7 @@ void Codecs::EncodeVideo()
         if (ret < 0)
             exit(1);
         
-        cout<<"Encoder : Linsize "<<picture->linesize[0]<<" "<<picture->linesize[1]<<" "<<picture->linesize[2]<<" "<<picture->height<<" "<<picture->width<<endl;
+        // cout<<"Encoder : Linsize "<<picture->linesize[0]<<" "<<picture->linesize[1]<<" "<<picture->linesize[2]<<" "<<picture->height<<" "<<picture->width<<endl;
         /* prepare a dummy image */
         /* Y */
         for(int y=0; y<c->height; y++){
@@ -177,7 +177,7 @@ void Codecs::EncodeVideo()
             }
         }
 
-        cout<<"Check point 2"<<endl;
+        // cout<<"Check point 2"<<endl;
 
         picture->pts = i;
         /* encode the image */
@@ -214,9 +214,9 @@ vector<FeatureMap> Codecs::DecodeVideo()
         exit(1);
     }
 
-    cout<<"Format "<<pFormatCtx->iformat->name<<endl;
-    cout<<"Duration "<<pFormatCtx->duration<<endl;
-    cout<<"BitRate "<<pFormatCtx->bit_rate<<endl;
+    // cout<<"Format "<<pFormatCtx->iformat->name<<endl;
+    // cout<<"Duration "<<pFormatCtx->duration<<endl;
+    // cout<<"BitRate "<<pFormatCtx->bit_rate<<endl;
 
     if (avformat_find_stream_info(pFormatCtx, NULL) < 0)
 	{
@@ -233,7 +233,7 @@ vector<FeatureMap> Codecs::DecodeVideo()
     {
         if(pFormatCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO)
             {
-                cout<<"Video Stream Index "<<i<<endl;
+                // cout<<"Video Stream Index "<<i<<endl;
                 video_stream_index = i;
                 pCodec = avcodec_find_decoder(pFormatCtx->streams[i]->codecpar->codec_id);
                 pCodecParameters = pFormatCtx->streams[i]->codecpar;

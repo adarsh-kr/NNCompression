@@ -13,6 +13,7 @@ import PIL, time
 import numpy as np
 from ResNet18 import *
 from Resnet import *
+from collections import Counter
 
 # arguments
 parser=argparse.ArgumentParser(description='Custom PyTorch ImageNet Training')
@@ -40,16 +41,24 @@ parser.add_argument('--saveModel', action='store_true', default=False)
 # train or eval mode
 parser.add_argument("--trainMode", action='store_true', default=False)
 parser.add_argument("--evalMode", action='store_true', default=False)
+parser.add_argument("--filterMode", action='store_true', default=False)
+parser.add_argument("--filterOnTrainData", action ='store_true', default=False)
+
 parser.add_argument("--checkpointDir", type=str, default="checkpoint"  )
 parser.add_argument("--checkpointInterval", type=int, default=30  )
 parser.add_argument("--layerDump", type=str, default="layerDump")
 parser.add_argument("--evalOnTrainData", action='store_true')
 parser.add_argument("--evalOnVideoData", action='store_true')
 
-
-
 LAYER_DUMP_DIR = "layerDump"
-
+# load the imageNet class 
+ImageNet1000 = {}
+with open("ImageNet1000") as f:
+    data = f.readlines()
+    for line in data:
+        key, val = line.strip().split(':')
+        ImageNet1000[int(key)] = val.split(",")[0].replace("'","").strip()
+    
 # train 
 def train(dataGen, model, criterion, optimizer, epoch, device):
     model.train()
@@ -60,7 +69,6 @@ def train(dataGen, model, criterion, optimizer, epoch, device):
         output = model(input)
         # print(layer_dump)
         loss = criterion(output, targets)
-        
         # make the grads zero for each var
         optimizer.zero_grad()
         # compute the gradients
@@ -71,6 +79,34 @@ def train(dataGen, model, criterion, optimizer, epoch, device):
         if batchNum%100==0:
             print("Epoch:{0}, BatchNum:{1}, Loss:{2}".format(epoch, batchNum, loss))
         return
+
+
+
+# filter topK
+def filterTopK(dataGen, model, criterion, epoch, device, k, classId):
+    print("Boss, Filter Mode On!")
+    model.eval()
+    total = 0
+    correct = 0
+    files = {}
+    # name of the class
+    className = ImageNet1000[classId]
+    # create a output file 
+    fileName = className + "_index"
+    classesFound = []
+    with open(fileName, "w") as f:
+        with torch.no_grad():
+            for batchNum, (input, targets) in enumerate(dataGen):
+                print("Batch {} Done".format(batchNum))
+                input, targets = input.to(device), targets.to(device)
+                output = model(input)
+                batchSize = output.size(0)
+                # get the ones
+                for i in range(output.size(0)):
+                    # print(output[i,:].topk(3)[1])
+                    if classId in output[i,:].topk(3)[1]:
+                        f.write(str(batchNum*batchSize + i) + "\n")
+            # print(Counter(classesFound))
 
 # eval
 def test(dataGen, model, criterion, epoch, device, dumpLayerOutput=False, trainData=False):
@@ -94,7 +130,7 @@ def test(dataGen, model, criterion, epoch, device, dumpLayerOutput=False, trainD
                 files[key] = open(getFileName("LayerOutput_", key), "w")
                 print("file created {}".format(key))    
         files["labels"] = open(getFileName("labels"), "w")
-
+    classesFound = []
     with torch.no_grad():
         for batchNum, (input, targets) in enumerate(dataGen):
             input, targets = input.to(device), targets.to(device)
@@ -102,6 +138,8 @@ def test(dataGen, model, criterion, epoch, device, dumpLayerOutput=False, trainD
             loss = criterion(output, targets)
             _, predicted = output.max(1)
             batchSize = output.size(0)
+            classesFound = classesFound + [ImageNet1000[x] for x in predicted.data.tolist()]
+            # print(Counter(classesFound))
             correctBatch = (predicted==targets).sum().item()
             total = total + batchSize
             correct = correct + correctBatch
@@ -126,6 +164,7 @@ def test(dataGen, model, criterion, epoch, device, dumpLayerOutput=False, trainD
                         np.savetxt(files[key], x, fmt='%1.9f', delimiter=',')
 
             print("Epoch: {0} Accuracy: {1}, TotalEx: {2}, CorrectEx: {3} ".format(epoch, correct*1.0/total, total, correct))
+        print(Counter(classesFound))
         return correct*1.0/total 
 
 
@@ -160,16 +199,16 @@ def main():
 
     # change transform for test dataset
     if args.evalOnVideoData:
-        # for video data make sure to resize to 32 
+        # for video data make sure to resize to 32
         transform = transforms.Compose([transforms.Resize((224, 224)),
                                         transforms.ToTensor(),
                                         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2470, 0.2435, 0.2616))])
 
-        data =  torchvision.datasets.ImageFolder("frames", transform = transform)
+        data = torchvision.datasets.ImageFolder("data/CaliforniaI_600/", transform = transform)
         testDataGen = DataLoader(data, batch_size=args.batch_size, num_workers=1, shuffle=False)
     else:
         transform = transforms.Compose([
-                                        # transforms.Resize(224),
+                                        transforms.Resize(224),
                                         transforms.ToTensor(),
                                         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2470, 0.2435, 0.2616))])
         testData = torchvision.datasets.CIFAR10(root="./data", train=False, download=True, transform=transform)
@@ -180,17 +219,17 @@ def main():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     if args.arch == "resnet18":
-        model = ResNet18(32)
-        # model = resnet18(pretrained=True)
+        # model = ResNet18(32)
+        model = resnet18(pretrained=True)
         model.to(device)
     elif args.arch == "resnet34":
-        model = models.resnet34(pretrained = args.pretrained)
+        model = resnet34(pretrained = args.pretrained)
     elif args.arch == "resnet50":
-        model = models.resnet50(pretrained = args.pretrained)
+        model = resnet50(pretrained = args.pretrained)
     elif args.arch == "resnet101":
-        model = models.resnet101(pretrained = args.pretrained)
+        model = resnet101(pretrained = args.pretrained)
     elif args.arch == "resnet152":
-        model = models.resnet152(pretrained = args.pretrained)
+        model = resnet152(pretrained = args.pretrained)
 
     # layer_dump = {}
     # def hook_block_(module, input, output):
@@ -268,10 +307,16 @@ def main():
         if args.evalOnTrainData:
             test(trainDataGen, model, criterion, epoch, device, dumpLayerOutput=False, trainData=True)
         else:
-            test(testDataGen, model, criterion, epoch, device,  dumpLayerOutput=True, trainData=False)
-
+            test(testDataGen, model, criterion, epoch, device,  dumpLayerOutput=False, trainData=False)
+    
+    if args.filterMode:
+        if args.filterOnTrainData:
+            filterTopK(trainDataGen, model, criterion, epoch, device,  k=3, classId=404)
+        else:
+            filterTopK(testDataGen, model, criterion,  epoch, device,  k=3, classId=404)
 
 if __name__ == "__main__":
+    IMAGENETCLass = "ImageNet1000"
     main()
     
 

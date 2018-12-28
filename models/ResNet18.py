@@ -9,11 +9,13 @@ import torch.nn as nn
 import random
 import argparse, math
 import numpy as np
-
+import time
+import CompressionLayer
 import wrap
 
 
 # get nearest perfect square
+# not needed btw, as we always want perfect square greater than than the present
 def getNearestPerfectSqr(n):
     l = int(math.sqrt(n))
     h = math.ceil(math.sqrt(n))
@@ -23,11 +25,12 @@ def getNearestPerfectSqr(n):
     else:
         return h*h
 
-
 def Convert_BHW_Format(layerData):
     # get the shape 
     batch, channel, height, width = layerData.shape
-    nearestSqr = getNearestPerfectSqr(channel)
+    # nearestSqr = getNearestPerfectSqr(channel)
+    nearestSqr = math.ceil(math.sqrt(channel))*math.ceil(math.sqrt(channel))
+
     
     final_h = int(math.sqrt(nearestSqr))*height
     final_w = int(math.sqrt(nearestSqr))*width
@@ -95,6 +98,7 @@ class ResNet18(nn.Module):
         self.block_1_bn2 = nn.BatchNorm2d(64)
 
         self.block_1_shortcut = EmptyShortcutLayer()
+        # self.block_1_compression = CompressionLayer.CompressionLayer("CompressionDataLayer", 1)
 
         # block 2
         self.block_2_conv1 = nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1, bias=False)
@@ -197,8 +201,15 @@ class ResNet18(nn.Module):
 
         # add compression 
         if not self.training:
-            data, b, h, w = Convert_BHW_Format(out)
-            a = wrap.compress(data, data.min(), data.max(), b, h, w, "random")
+            print("Nothing")
+            # out = self.block_1_compression(out)
+            # data, b, h, w = Convert_BHW_Format(out)
+            # a = wrap.compress(data, data.min(), data.max(), b, h, w, "random")
+            # # get file size
+            # fsize = os.path.getsize("random")
+            # print("FSize: {}".format(fsize))
+            # time.sleep(10)
+
             # to update the going vector 
 
         out = self.block_1_conv2(out)
