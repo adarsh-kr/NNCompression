@@ -9,7 +9,7 @@ import argparse
 
 
 parser = argparse.ArgumentParser(description="Get Object Images")
-parser.add_argument('--area_limit', default=2000, type=int, help = 'min area of the bounding box')
+parser.add_argument('--area_limit', default=1000, type=int, help = 'min area of the bounding box')
 parser.add_argument('--frm_path', default="../datasets/Lausanne/frames/", type = str, help="from path")
 parser.add_argument('--output_path', default="../results/TopKFiltering/Lausanne/objectImgs/", type = str, help="output folder")
 
@@ -94,10 +94,11 @@ if __name__ == "__main__":
                     abs_obj_path, frame_idx, x, x+w, y, y+h)
                 obj_map_file.write(map_str)
                 obj_idx += 1
+                mapping_file.write(abs_obj_path + "\t0\n")
+
 
         del image
         del gray_image
         del fgmask  
-        # break
 
     obj_map_file.close()

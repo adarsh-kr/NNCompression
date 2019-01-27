@@ -14,15 +14,54 @@ from cntk.ops import *
 from cntk.io import ImageDeserializer, MinibatchSource, StreamDef, StreamDefs, FULL_DATA_SWEEP
 from cntk.debugging import *
 
+# parser = argparse.ArgumentParser()
+# parser.add_argument('--model_file_path', default="../datasets/Lausanne/models/ResNet18_R6_112_Stream.model", 
+#                     type=str, help = 'model file path')
+
+# parser.add_argument('--map_file_path', default="../datasets/Lausanne/mapping_file", 
+#                     type=str, help = 'map file path')
+
+# parser.add_argument('--num_objects', default=600, 
+#                     type=int, help = 'total images in the test dataset')
+
+# parser.add_argument('--image_size', default=112, 
+#                     type=int, help = 'image size')
+
+# parser.add_argument('--feature_size', default=112, 
+#                     type=int, help = 'feature size')
+
+# parser.add_argument('--num_classes', default=5, 
+#                     type=int, help = 'num classes')
+
+# parser.add_argument('--video_name', default='Lausanne',
+#                     type=str, help='name of the video stream')
+
+
+
+# args = parser.parse_args()
+
+# model_file_path = args.model_file_path
+# map_file_path   = args.map_file_path
+# feat_node_name  = ''
+# pred_node_name  = 'prediction'
+# num_objects     = args.num_objects
+# image_size   = args.image_size
+# feature_size = args.feature_size
+# mean_file_path = ''
+# num_classes    = args.num_classes
+# out_top_file_name  = os.path.join("../results/TopKFiltering/", args.video_name, "topKProb")
+# out_feat_file_name =  os.path.join("../results/TopKFiltering/", args.video_name, "featureVec")
+
 model_file_path = sys.argv[1]
 map_file_path = sys.argv[2]
 feat_node_name = sys.argv[3]
+print('adadad')
+print(feat_node_name)
 pred_node_name = sys.argv[4]
 num_objects = int(sys.argv[5])
 image_size = int(sys.argv[6])
 feature_size = int(sys.argv[7])
 mean_file_path = sys.argv[8]
-print(sys.argv[9])
 num_classes = int(sys.argv[9])
 out_top_file_name = sys.argv[10]
 out_feat_file_name = sys.argv[11]

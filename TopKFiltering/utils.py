@@ -34,21 +34,26 @@ def create_topK_file(file, outfile):
 
 # takes topKtxt file, value of k, and class index
 # creates a file containing index of images which are in topK
-def topKFilter(txtFile, k, classId, outputFile):
+def topKFilter(txtFile, k, classId, outputFile, obj_map):
     data = np.loadtxt(txtFile, delimiter=' ')
     print(data.shape)
     print(outputFile)
-    with open(outputFile, "w") as writer:
+    filteredFrameids = []
+    with open(outputFile, "w") as writer, open(obj_map) as f:
         for i in range(data.shape[0]):
+            frame_id = f.readline().strip().split("\t")[1]
             line = data[i,].tolist()
             # indexes
             classIdIndex = line[::2].index(classId)
             if classIdIndex+1 <= k:
-                writer.write(str(i+1) + "\n")
+                filteredFrameids = filteredFrameids + [frame_id]
+                # writer.write(str(i+1) + "\n")
+        filteredFrameids = list(set(filteredFrameids))
+        for x in filteredFrameids:
+            writer.write(str(x) + "\n")
 
 # just copy the filtered files to outputfolder
 def moveFilteredFiles(filteredFile, frameFolder, outputFolder):
-    
     if not os.path.exists(outputFolder):
         os.makedirs(outputFolder)
         print("Output Folder created !! ")
@@ -58,7 +63,7 @@ def moveFilteredFiles(filteredFile, frameFolder, outputFolder):
         # traverse each image path
         count = 0
         for x in data:
-            imgname = "out" + "{:04d}".format(int(x)) + ".jpg"
+            imgname = "out" + "{:03d}".format(int(x)) + ".jpg"
             path = frameFolder + "/" + imgname
             outputPath = outputFolder + "/" + imgname
             shutil.copyfile(path, outputPath)
@@ -68,19 +73,25 @@ def moveFilteredFiles(filteredFile, frameFolder, outputFolder):
 
 if __name__ == "__main__":
     # parser
-    # parser = argparse.ArgumentParser(description="TopK Filtering")
-    # parser.add_argument('--k', default=3, type=int, help = 'value for K, in top K')
-    # parser.add_argument('--classId', default=0, type = int, help="index of the class")
-    # parser.add_argument('--videoName', default="Lausanne", type = str, help="video name")
+    parser = argparse.ArgumentParser(description="TopK Filtering")
+    parser.add_argument('--k', default=2, type=int, help = 'value for K, in top K')
+    parser.add_argument('--classId', default=0, type = int, help="index of the class")
+    parser.add_argument('--videoName', default="Lausanne", type = str, help="video name")
 
-    # args = parser.parse_args()
+    args = parser.parse_args()
     
-    # create_topK_file("../results/TopKFiltering/{}/topKClassProb".format(args.videoName), "../results/TopKFiltering/{}/topKClassProb.txt".format(args.videoName))
-    # topKFilter("../results/TopKFiltering/{}/topKClassProb.txt".format(args.videoName), args.k, args.classId, "../results/TopKFiltering/{0}/filteredFramesIds_classId_{1}.txt".format(args.videoName, args.classId))
-    # moveFilteredFiles("../results/TopKFiltering/{0}/filteredFramesIds_classId_{1}.txt".format(args.videoName, args.classId),
-    #                   "/home/adarsh/Desktop/RAWork/NNCompression/datasets/{}/frames/".format(args.videoName),
-    #                   "/home/adarsh/Desktop/RAWork/NNCompression/results/TopKFiltering/{0}/filteredFrames_classId_{1}".format(args.videoName, args.classId))
+    create_topK_file("../results/TopKFiltering/{}/topKClassProb".format(args.videoName), "../results/TopKFiltering/{}/topKClassProb.txt".format(args.videoName))
+    
+    topKFilter("../results/TopKFiltering/{}/topKClassProb.txt".format(args.videoName)
+                ,args.k
+                ,args.classId
+                ,"../results/TopKFiltering/{0}/filteredFramesIds_classId_{1}.txt".format(args.videoName, args.classId)
+                ,"../results/TopKFiltering/{0}/obj_map.txt".format(args.videoName))
+    
+    moveFilteredFiles("../results/TopKFiltering/{0}/filteredFramesIds_classId_{1}.txt".format(args.videoName, args.classId),
+                      "/home/adarsh/Desktop/RAWork/NNCompression/datasets/{}/frames/".format(args.videoName),
+                      "/home/adarsh/Desktop/RAWork/NNCompression/results/TopKFiltering/{0}/filteredFrames_classId_{1}".format(args.videoName, args.classId))
 
 
-    getBackgroundImage("../datasets/Lausanne/frames/")
+    # getBackgroundImage("../datasets/Lausanne/frames/")
 
