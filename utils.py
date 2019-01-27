@@ -2,11 +2,10 @@ import os
 import numpy as np
 
 # plot resnet plot 
-def ResNetAvgCompressionPlot(dir="models/results/CaliforniaI_600/1fps/resnet152/time/"
+def ResNetAvgCompressionPlot(dir="models/results/CaliforniaI_600/1fps/resnet152/batchSize_1/"
                             , layers=[3, 8, 36, 3], fileFormat="LayerData_layerNum_{0}_blockNum_{1}"):
     # layers = [2, 2, 2, 2]
     # layers = [3, 4, 6, 3]
-    # layers = [3, 4, 23, 3]
     # layers = [3, 4, 23, 3]
     # layers = [3, 8, 36, 3]
 

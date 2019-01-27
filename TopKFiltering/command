@@ -1,0 +1,2 @@
+python3 eval_extract_model_top_prob_stream_h5.py ResNet18_R6_112_Stream.model map_file '' prediction 1 112 128 '' 5 out out_file
+
