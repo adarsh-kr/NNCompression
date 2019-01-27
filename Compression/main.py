@@ -49,6 +49,7 @@ parser.add_argument("--checkpointInterval", type=int, default=30  )
 parser.add_argument("--layerDump", type=str, default="layerDump")
 parser.add_argument("--evalOnTrainData", action='store_true')
 parser.add_argument("--evalOnVideoData", action='store_true')
+parser.add_argument("--video_name", type=str, default="Lausanne", help='name of video dataset')
 
 LAYER_DUMP_DIR = "layerDump"
 # load the imageNet class 
@@ -201,7 +202,7 @@ def main():
                                         transforms.ToTensor(),
                                         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2470, 0.2435, 0.2616))])
 
-        data = torchvision.datasets.ImageFolder("data/CaliforniaI_600/", transform = transform)
+        data = torchvision.datasets.ImageFolder(args.video_name, transform = transform)
         testDataGen = DataLoader(data, batch_size=args.batch_size, num_workers=1, shuffle=False)
     else:
         transform = transforms.Compose([
