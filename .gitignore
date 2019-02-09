@@ -1,0 +1,6 @@
+*.pgm
+*.jpeg
+*.jpg
+datasets/
+results/
+.vscode
