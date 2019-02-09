@@ -1,4 +1,4 @@
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import wrap
 import numpy as np
 
@@ -24,13 +24,13 @@ comp = []
 init = []
 diff = []
 for i in range(a.size):
-    print("{0}, {1}".format(a[i], data[0][i]))
+#    print("{0}, {1}".format(a[i], data[0][i]))
     comp = comp + [a[i]]
     init = init + [data[0][i]]
     diff = diff + [a[i] - data[0][i]]
 # plt.plot(comp)
-plt.plot(diff)
+#plt.plot(diff)
 # plt.plot(x, 2 * x)
 # plt.plot(x, 3 * x)
 # plt.plot(x, 4 * x)
-plt.show()
+#plt.show()
