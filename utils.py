@@ -1,9 +1,27 @@
 import os
 import numpy as np
+from shutil import copyfile
+
+# make sequential
+def makeSequential(dir):
+
+    outputDir = os.path.join(dir, "../sequential")
+
+    count = 0
+    for i in range(1200):
+        src_file = os.path.join(dir, "out{:04d}.jpg".format(i))
+        # print(src_file)
+        if os.path.exists(src_file):
+            print(count)
+            dest_file = os.path.join(outputDir, "out{:04d}.jpg".format(count))
+            count = count + 1
+            copyfile(src_file, dest_file)
+            
+
 
 # plot resnet plot 
-def ResNetAvgCompressionPlot(dir="models/results/CaliforniaI_600/1fps/resnet152/batchSize_1/"
-                            , layers=[3, 8, 36, 3], fileFormat="LayerData_layerNum_{0}_blockNum_{1}"):
+def ResNetAvgCompressionPlot(dir="results/Compression/California/batch_size_32"
+                            , layers=[3, 4, 23, 3], fileFormat="LayerData_layerNum_{0}_blockNum_{1}"):
     # layers = [2, 2, 2, 2]
     # layers = [3, 4, 6, 3]
     # layers = [3, 4, 23, 3]
@@ -61,7 +79,7 @@ def MobileNetAvgCompressionPlot(dir="models/results/CaliforniaI_600/1fps/MobileN
 if __name__ == "__main__":
     ResNetAvgCompressionPlot()
     # MobileNetAvgCompressionPlot()
-
+    # makeSequential("results/TopKFiltering/Bellevue/filteredFrames_classId_0/0")
 
 
 

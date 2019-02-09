@@ -74,6 +74,9 @@ FeatureMap::FeatureMap(vector<int> Y, int height, int width, double min_val, dou
     // set YUV u and v to 0
     yuv_rep.u = vector<int>(height*width, 0);
     yuv_rep.v = vector<int>(height*width, 0);
+
+    q_max = max_val;
+    q_min = min_val;
 }
 
 // convert tensor 2 grayscale
@@ -101,7 +104,8 @@ void FeatureMap::ConvertGrayScale2Tensor()
 {
     for(int i=0; i<grayscale_rep.grayscale.size(); i++)
         {
-            double buf = 255*grayscale_rep.grayscale[i]*(q_max - q_min) + q_min;
+            
+            double buf = (grayscale_rep.grayscale[i]*(q_max - q_min))/255 + q_min;
             tensor.push_back(buf);
         }    
 }

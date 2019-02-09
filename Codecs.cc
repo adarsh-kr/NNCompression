@@ -347,15 +347,16 @@ FrameResponse Codecs::DecodeFrame(AVPacket *pPacket, AVCodecContext *pCodecConte
     
         // add pFrame to frameResponse variable
         vector<int> buf; 
-        for(int i =0 ;i<pFrame->height; i++)
+        for(int i=0; i<pFrame->height; i++)
             {
                 for(int j=0; j<pFrame->width; j++)
                 {
+                    // cout<<int(pFrame->data[0][j + i*pFrame->linesize[0]])<<endl;
                     buf.push_back(pFrame->data[0][j + i*pFrame->linesize[0]]);
                 }
             }
         
-        frameResponse.frames.push_back(FeatureMap(buf, pFrame->height, pFrame->width, q_min, q_max));
+        frameResponse.frames.push_back(FeatureMap(buf, pFrame->height, pFrame->width, this->q_min, this->q_max));
 
         // get pFrame into
         // cout<<"LinSize :"<<pFrame->linesize[0]<<" "<<pFrame->linesize[1]<<" "<<pFrame->linesize[2]<<endl; 

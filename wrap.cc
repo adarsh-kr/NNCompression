@@ -27,9 +27,9 @@ py::array_t<double> compress(py::array_t<double> data, double q_min, double q_ma
         allFrames.push_back(FeatureMap(frame, height, width, q_min, q_max));
     }
 
-    cout<<"Q_min"<<q_min<<endl;
-    cout<<"Q_Max"<<q_max<<endl;
-    cout<<allFrames.size()<<endl;
+    // cout<<"Q_min"<<q_min<<endl;
+    // cout<<"Q_Max"<<q_max<<endl;
+    // cout<<allFrames.size()<<endl;
     
     Codecs codecData(allFrames, height, width, q_min, q_max, batch, fileName);
     codecData.EncodeVideo();
@@ -38,7 +38,6 @@ py::array_t<double> compress(py::array_t<double> data, double q_min, double q_ma
     py::array_t<double> finalOutput = py::array_t<double>(batch*height*width);
     py::buffer_info outBuf =  finalOutput.request();
     double *outDataPtr = (double *) outBuf.ptr;
-
 
     for(int i=0; i<out.size(); i++)
     {   
