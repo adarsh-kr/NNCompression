@@ -32,7 +32,16 @@ def conv1x1(in_planes, out_planes, stride=1):
 class BasicBlock(nn.Module):
     expansion = 1
 
-    def __init__(self, inplanes, planes, fileName, layerNum, blockNum, stride=1, downsample=None):
+    def __init__(self, inplanes,
+                 planes,
+                 fileName,
+                 layerNum,
+                 blockNum,
+                 stride=1,
+                 downsample=None,
+                 compress=False,
+                 returnCompressedTensor=False):
+
         super(BasicBlock, self).__init__()
         self.conv1 = conv3x3(inplanes, planes, stride)
         self.bn1 = nn.BatchNorm2d(planes)
@@ -42,7 +51,7 @@ class BasicBlock(nn.Module):
         self.downsample = downsample
         self.stride = stride
         self.fileName = fileName + "_layerNum_"+ str(layerNum) + "_blockNum_" + str(blockNum)
-        self.compressionLayer = CompressionLayer(self.fileName)
+        self.compressionLayer = CompressionLayer(self.fileName, returnCompressedTensor, compress)
 
 
     def forward(self, x):
@@ -74,7 +83,9 @@ class BasicBlock(nn.Module):
 class Bottleneck(nn.Module):
     expansion = 4
 
-    def __init__(self, inplanes, planes, fileName, layerNum, blockNum, stride=1, downsample=None):
+    def __init__(self, inplanes, planes, fileName, layerNum, blockNum, stride=1, downsample=None, 
+                 returnCompressedTensor=False,
+                 compress=False):
         super(Bottleneck, self).__init__()
         self.conv1 = conv1x1(inplanes, planes)
         self.bn1 = nn.BatchNorm2d(planes)
@@ -86,8 +97,7 @@ class Bottleneck(nn.Module):
         self.downsample = downsample
         self.stride = stride
         self.fileName = fileName + "_layerNum_"+ str(layerNum) + "_blockNum_" + str(blockNum)
-        self.compressionLayer = CompressionLayer(self.fileName)
-
+        self.compressionLayer = CompressionLayer(self.fileName, returnCompressedTensor, compress)
 
     def forward(self, x):
         start = time.time()
@@ -119,7 +129,7 @@ class Bottleneck(nn.Module):
 
 class ResNet(nn.Module):
 
-    def __init__(self, block, layers, num_classes=1000):
+    def __init__(self, block, layers, num_classes=1000, compressAtLayer=1, compressAtBlock=1):
         super(ResNet, self).__init__()
         self.inplanes = 64
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3,
@@ -127,12 +137,18 @@ class ResNet(nn.Module):
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-        self.layer1 = self._make_layer(block, 64, layers[0],  layerNum=1)
-        self.layer2 = self._make_layer(block, 128, layers[1], layerNum=2, stride=2)
-        self.layer3 = self._make_layer(block, 256, layers[2], layerNum=3, stride=2)
-        self.layer4 = self._make_layer(block, 512, layers[3], layerNum=4, stride=2)
+        
+        self.compressAtLayer = compressAtLayer
+        self.compressAtBlock = compressAtBlock
+
+        self.layer1 = self._make_layer(block, 64,  layers[0],  layerNum=1)
+        self.layer2 = self._make_layer(block, 128, layers[1],  layerNum=2, stride=2)
+        self.layer3 = self._make_layer(block, 256, layers[2],  layerNum=3, stride=2)
+        self.layer4 = self._make_layer(block, 512, layers[3],  layerNum=4, stride=2)
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(512 * block.expansion, num_classes)
+
+        
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -166,15 +182,19 @@ class ResNet(nn.Module):
             )
 
         layers = []
-        layers.append(block(self.inplanes, planes, "LayerData", layerNum, 0, stride, downsample))
-        # layers.append(CompressionLayer("CompressionData", layerNum))
+        if self.compressAtLayer == layerNum and self.compressAtBlock==0:
+            layers.append(block(self.inplanes, planes, "LayerData", layerNum, 0, stride, downsample, compress=True, returnCompressedTensor=True))
+        else:
+            layers.append(block(self.inplanes, planes, "LayerData", layerNum, 0, stride, downsample))
 
         self.inplanes = planes * block.expansion
         blockNum=0
         for _ in range(1, blocks):
             blockNum+=1
-            layers.append(block(self.inplanes, planes, "LayerData", layerNum, blockNum))
-            # layers.append(CompressionLayer("CompressionData", layerNum))
+            if self.compressAtLayer == layerNum and self.compressAtBlock == blockNum: 
+                layers.append(block(self.inplanes, planes, "LayerData", layerNum, blockNum, compress=True, returnCompressedTensor=True))
+            else:
+                layers.append(block(self.inplanes, planes, "LayerData", layerNum, blockNum))
 
         return nn.Sequential(*layers)
 

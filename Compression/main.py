@@ -51,6 +51,12 @@ parser.add_argument("--evalOnTrainData", action='store_true')
 parser.add_argument("--evalOnVideoData", action='store_true')
 parser.add_argument("--video_name", type=str, default="Lausanne", help='name of video dataset')
 
+parser.add_argument("--compressAtLayer", type=int, default=1, help='compress at this layer')
+parser.add_argument("--compressAtBlock", type=int, default=1, help='compress at this blockNum')
+
+
+args = parser.parse_args()
+
 LAYER_DUMP_DIR = "layerDump"
 # load the imageNet class 
 ImageNet1000 = {}
@@ -130,7 +136,7 @@ def test(dataGen, model, criterion, epoch, device, dumpLayerOutput=False, trainD
             if model.checkpoints[key]:
                 files[key] = open(getFileName("LayerOutput_", key), "w")
                 print("file created {}".format(key))    
-        files["labels"] = open(getFileName("labels"), "w")
+        files["labels"] = open(getFileName("labels" + str(args.compressAtLayer) + "_" + str(args.compressAtBlock)), "w")
     with torch.no_grad():
         for batchNum, (input, targets) in enumerate(dataGen):
             input, targets = input.to(device), targets.to(device)
@@ -173,7 +179,7 @@ def adjustLearningRate(optimizer, decay_factor):
         print("Learning Rate Decayed {0} --> {1}".format(prev, param_group['lr']))
 
 def main():
-    args = parser.parse_args()
+    #args = parser.parse_args()
 
     if args.seed is not None:
         random.seed(args.seed)
@@ -218,22 +224,16 @@ def main():
 
     if args.arch == "resnet18":
         # model = ResNet18(32)
-        model = resnet18(pretrained=True)
+        model = resnet18(pretrained=True, compressAtLayer=args.compressAtLayer, compressAtBlock=args.compressAtBlock)
         model.to(device)
     elif args.arch == "resnet34":
-        model = resnet34(pretrained = args.pretrained)
+        model = resnet34(pretrained  = args.pretrained, compressAtLayer=args.compressAtLayer, compressAtBlock=args.compressAtBlock)
     elif args.arch == "resnet50":
-        model = resnet50(pretrained = args.pretrained)
+        model = resnet50(pretrained  = args.pretrained, compressAtLayer=args.compressAtLayer, compressAtBlock=args.compressAtBlock)
     elif args.arch == "resnet101":
-        model = resnet101(pretrained = args.pretrained)
+        model = resnet101(pretrained = args.pretrained, compressAtLayer=args.compressAtLayer, compressAtBlock=args.compressAtBlock)
     elif args.arch == "resnet152":
-        model = resnet152(pretrained = args.pretrained)
-
-    # layer_dump = {}
-    # def hook_block_(module, input, output):
-    #     layer_dump[""].append(output)
-    
-    # model.block_3_shortcut.register_forward_hook(hook)
+        model = resnet152(pretrained = args.pretrained, compressAtLayer=args.compressAtLayer, compressAtBlock=args.compressAtBlock)
 
     # decide loss function
     criterion = nn.CrossEntropyLoss()
@@ -303,9 +303,9 @@ def main():
                            }   
 
         if args.evalOnTrainData:
-            test(trainDataGen, model, criterion, epoch, device, dumpLayerOutput=False, trainData=True)
+            test(trainDataGen, model, criterion, epoch, device, dumpLayerOutput=True, trainData=True)
         else:
-            test(testDataGen, model, criterion, epoch, device,  dumpLayerOutput=False, trainData=False)
+            test(testDataGen, model, criterion, epoch, device,  dumpLayerOutput=True, trainData=False)
     
     # if args.filterMode:
     #     if args.filterOnTrainData:

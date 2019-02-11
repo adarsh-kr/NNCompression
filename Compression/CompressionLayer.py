@@ -13,6 +13,20 @@ import time
 import wrap
 
 
+def Inverse_BHW_Format(comp_data, b, h, w, init_c, init_h, init_w, img_per_row):
+    comp_data  = comp_data.reshape((b, h, w))
+    final_data = np.zeros((b, init_c, init_h, init_w))
+    
+    # for each i in range(b)
+    for i in range(b):
+        # for each batch 
+        for j in range(init_c):
+            top_left_corner_row   = int((j)/img_per_row)*init_h
+            top_left_corner_col = int(((j)%img_per_row)*init_w)
+            channel_j = comp_data[i, top_left_corner_row:(top_left_corner_row+init_h), top_left_corner_col:(top_left_corner_col+init_w)]
+            final_data[i, j, :, : ] = channel_j
+    return final_data
+
 def Convert_BHW_Format(layerData):
     # get the shape 
     batch, channel, height, width = layerData.shape
@@ -36,34 +50,48 @@ def Convert_BHW_Format(layerData):
             top_left_corner_col = int(((i)%img_per_row)*width)
             finalData[j, top_left_corner_row:(top_left_corner_row+height), top_left_corner_col:(top_left_corner_col+width)] = img
 
-    return finalData, batch, final_h, final_w   
+    return finalData, batch, final_h, final_w, img_per_row   
 
 
 class CompressionLayer(nn.Module):
-    def __init__(self, fileName):
+    def __init__(self, fileName, returnCompressedTensor=False, compress=False):
         super(CompressionLayer, self).__init__()
         self.fileName = fileName
         # pooling for downsample
-        self.avg_pool = nn.AvgPool2d(2)
+        self.returnCompressedTensor = returnCompressedTensor
+        self.compress = compress
 
     def forward(self, x):
+        
         if not self.training:
-            # y = self.avg_pool(x)
-            data, b, h, w = Convert_BHW_Format(x)
-            start = time.time()
-            try:
-                a = wrap.compress(data, data.min(), data.max(), b, h, w, "random")
-                time.sleep(0.05)
-            except:
-                print("Going to Exception")
-                time.sleep(5)
-                a = wrap.compress(data, data.min(), data.max(), b, h, w, "random")
-            print(a)
-            end = time.time()
-            # time.sleep(0.005)
-            elapsedTime = end - start
-            # get file size
-            fsize = os.path.getsize("random")
-            with open(self.fileName, "a") as f:
-                f.write("{0},{1}\n".format(fsize, elapsedTime))
+            
+            if self.compress:
+                
+                init_b, init_c, init_h, init_w = x.shape
+                data, b, h, w, img_per_row = Convert_BHW_Format(x)
+                start = time.time()
+                
+                try:
+                    # comp_data is going to be one dimensional b*h
+                    comp_data = wrap.compress(data, data.min(), data.max(), b, h, w, "random")
+                except:
+                    print("Going to Exception")
+                    time.sleep(5)
+                    comp_data = wrap.compress(data, data.min(), data.max(), b, h, w, "random")
+
+                end = time.time()
+                
+                elapsedTime = end - start
+                # get file size
+                fsize = os.path.getsize("random")
+                
+                with open(self.fileName, "a") as f:
+                    f.write("{0},{1}\n".format(fsize, elapsedTime))
+
+                if self.returnCompressedTensor:
+                    comp_x = Inverse_BHW_Format(comp_data, b, h, w, init_c, init_h, init_w, img_per_row)
+                    comp_x = torch.from_numpy(comp_x).type(torch.FloatTensor)        
+                    print(torch.min(x))
+                    print(torch.min(comp_x))
+                    return comp_x
         return x
