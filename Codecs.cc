@@ -39,7 +39,7 @@ Codecs::Codecs()
 
 }
 
-Codecs::Codecs(vector<FeatureMap> data, int height, int width, double min_val, double max_val, int batch, string file)
+Codecs::Codecs(vector<FeatureMap> data, int height, int width, double min_val, double max_val, int batch, string file, string preset_parameter)
 {
     frames = data;
     fileName = file;
@@ -48,6 +48,7 @@ Codecs::Codecs(vector<FeatureMap> data, int height, int width, double min_val, d
     this->batch = batch;
     this->q_min = min_val;
     this->q_max = max_val;
+    this->preset_parameter = preset_parameter;
 }
 
 
@@ -92,7 +93,8 @@ void Codecs::EncodeVideo()
     avcodec_register_all();
     
     /* find the mpeg1video encoder */
-    codec = avcodec_find_encoder(AV_CODEC_ID_MPEG1VIDEO);
+    //codec = avcodec_find_encoder(AV_CODEC_ID_MPEG1VIDEO);
+    codec = avcodec_find_encoder(AV_CODEC_ID_H264);
     
     if (!codec) {
         cerr<<"codec not found"<<endl;
@@ -120,10 +122,15 @@ void Codecs::EncodeVideo()
     // TODO : can it take other formats 
     c->pix_fmt = AV_PIX_FMT_YUV420P;
 
-
+    AVDictionary * codec_options( 0 );
+    cout<<this->preset_parameter<<endl;
+    
+    //preset: ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow, placebo
+    av_dict_set(&codec_options, "preset", this->preset_parameter.c_str(), 0);
+    
 
     /* open it */
-    if (avcodec_open2(c, codec, NULL) < 0) {
+    if (avcodec_open2(c, codec, &codec_options) < 0) {
         cerr<<"could not open codec\n";
         exit(1);
     }    

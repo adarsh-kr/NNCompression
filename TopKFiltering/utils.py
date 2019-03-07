@@ -49,9 +49,12 @@ def topKFilter(txtFile, k, classId, outputFile, obj_map):
     with open(outputFile, "w") as writer, open(obj_map) as f:
         for i in range(data.shape[0]):
             frame_id = f.readline().strip().split("\t")[1]
+            print(frame_id)
             line = data[i,].tolist()
             # indexes
             classIdIndex = line[::2].index(classId)
+            #print(line)
+            #print(classIdIndex)
             if classIdIndex+1 <= k:
                 # print(classIdIndex+1, k)
                 filteredFrameids = filteredFrameids + [frame_id]

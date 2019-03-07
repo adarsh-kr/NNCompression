@@ -1,14 +1,15 @@
 import numpy as np
 
-
-labels = np.genfromtxt('batch_32/labels-1_-1')
+labels = np.genfromtxt('coral_labels')
 a = [3, 3, 23, 3]
 
 for i in range(4):
     for j in range(a[i]):
-        #print(i+1, j)
-        c = np.genfromtxt('batch_64/labels{0}_{1}'.format(i+1, j))
-        print((c==labels).sum())
+        try:
+            c = np.genfromtxt('Coral_H264_topk_slower/labels/labels{0}_{1}'.format(i+1, j))
+            print((c==labels).sum())
+        except Exception:
+            print("no")
         #        print()
         #print("labels{0}_{1}_{2}".format(i+1, j, (c==labels).sum()))
         
