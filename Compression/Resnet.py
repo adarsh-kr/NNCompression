@@ -99,11 +99,10 @@ class Bottleneck(nn.Module):
         self.stride = stride
         self.fileName = fileName + "_layerNum_"+ str(layerNum) + "_blockNum_" + str(blockNum)
         self.compressionLayer = CompressionLayer(self.fileName, returnCompressedTensor, compress)
+        print("Bottlenect : LayerNum {0} BlockNum {1} Compress {2} ReturnCompressedTesnor {3} ".format(layerNum, blockNum, compress, returnCompressedTensor))
 
     def forward(self, x):
         start = time.time()
-        print("Bottlenect Forward")
-        print(x.shape)
         residual = x
         out = self.conv1(x)
         out = self.bn1(out)

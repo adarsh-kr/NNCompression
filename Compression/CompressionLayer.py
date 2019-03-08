@@ -99,7 +99,7 @@ class CompressionLayer(nn.Module):
                 with open(self.fileName, "a") as f:
                     f.write("{0},{1},{2},{3},{4},{5}\n".format(fsize, elapsedTime, rmse_I, rmse_II, rmse_III, rmse_IV))
 
-                if self.returnCompressedTensor:
-                    return comp_x
-                else:
-                    return x
+            if self.returnCompressedTensor:
+                return comp_x
+            else:
+                return x
