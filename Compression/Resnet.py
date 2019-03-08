@@ -81,7 +81,6 @@ class BasicBlock(nn.Module):
         #    f.write("{0},{1}\n".format(a, end-start))
         return out
 
-
 class Bottleneck(nn.Module):
     expansion = 4
 
@@ -103,8 +102,9 @@ class Bottleneck(nn.Module):
 
     def forward(self, x):
         start = time.time()
+        print("Bottlenect Forward")
+        print(x.shape)
         residual = x
-
         out = self.conv1(x)
         out = self.bn1(out)
         out = self.relu(out)
@@ -190,7 +190,7 @@ class ResNet(nn.Module):
         if self.compressAtLayer == layerNum and self.compressAtBlock==0:
             layers.append(block(self.inplanes, planes, "LayerData", layerNum, 0, stride, downsample, compress=True, returnCompressedTensor=True))
         else: 
-            layers.append(block(self.inplanes, planes, "LayerData", layerNum, 0, stride, downsample, compress=True))
+            layers.append(block(self.inplanes, planes, "LayerData", layerNum, 0, stride, downsample, compress=False, returnCompressedTensor=False))
 
         self.inplanes = planes * block.expansion
         blockNum=0
@@ -199,7 +199,7 @@ class ResNet(nn.Module):
             if self.compressAtLayer == layerNum and self.compressAtBlock == blockNum: 
                 layers.append(block(self.inplanes, planes, "LayerData", layerNum, blockNum, compress=True, returnCompressedTensor=True))
             else:
-                layers.append(block(self.inplanes, planes, "LayerData", layerNum, blockNum, compress=True))
+                layers.append(block(self.inplanes, planes, "LayerData", layerNum, blockNum, compress=False, returnCompressedTensor=False))
 
         return nn.Sequential(*layers)
 
@@ -211,9 +211,7 @@ class ResNet(nn.Module):
         x = self.bn1(x)
         x = self.relu(x)
         x = self.maxpool(x)
-
         x = self.layer1(x)
-
         if self.training==False:
             self.addLayerDumps("block_2", x)
 
@@ -232,7 +230,6 @@ class ResNet(nn.Module):
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
         x = self.fc(x)
-
         return x
 
 

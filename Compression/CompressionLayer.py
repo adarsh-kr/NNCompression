@@ -12,6 +12,9 @@ import numpy as np
 import time
 import wrap
 
+# preset : ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow, placebo
+PRESET_PARAMETER = 'fast'
+
 
 def Inverse_BHW_Format(comp_data, b, h, w, init_c, init_h, init_w, img_per_row):
     comp_data  = comp_data.reshape((b, h, w))
@@ -73,25 +76,30 @@ class CompressionLayer(nn.Module):
                 
                 try:
                     # comp_data is going to be one dimensional b*h
-                    comp_data = wrap.compress(data, data.min(), data.max(), b, h, w, "random")
+                    comp_data = wrap.compress(data, data.min(), data.max(), b, h, w, "random", PRESET_PARAMETER)
                 except:
                     print("Going to Exception")
                     time.sleep(5)
-                    comp_data = wrap.compress(data, data.min(), data.max(), b, h, w, "random")
+                    comp_data = wrap.compress(data, data.min(), data.max(), b, h, w, "random", PRESET_PARAMETER)
 
                 end = time.time()
                 
                 elapsedTime = end - start
                 # get file size
                 fsize = os.path.getsize("random")
-                
+
+                comp_x = Inverse_BHW_Format(comp_data, b, h, w, init_c, init_h, init_w, img_per_row)
+                comp_x = torch.from_numpy(comp_x).type(torch.FloatTensor)        
+
+                rmse_I   = torch.mean(abs(comp_x - x)/abs(x+1))
+                rmse_II  = torch.mean(abs(comp_x - x)/abs(x+1))
+                rmse_III = torch.mean(abs(comp_x - x)/abs(x+10^-6)) 
+                rmse_IV  = torch.mean(2*abs(comp_x - x)/(abs(x) + abs(y))) 
+
                 with open(self.fileName, "a") as f:
-                    f.write("{0},{1}\n".format(fsize, elapsedTime))
+                    f.write("{0},{1},{2},{3},{4},{5}\n".format(fsize, elapsedTime, rmse_I, rmse_II, rmse_III, rmse_IV))
 
                 if self.returnCompressedTensor:
-                    comp_x = Inverse_BHW_Format(comp_data, b, h, w, init_c, init_h, init_w, img_per_row)
-                    comp_x = torch.from_numpy(comp_x).type(torch.FloatTensor)        
-                    print(torch.min(x))
-                    print(torch.min(comp_x))
                     return comp_x
-        return x
+                else:
+                    return x
