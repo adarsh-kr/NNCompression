@@ -2,8 +2,9 @@
 #define CODECS_H
 
 #include <iostream>
-#include "FeatureMap.h"
 #include <vector>
+#include "FeatureMap.h"
+
 extern "C"
 {
     #include "libavutil/frame.h"
