@@ -1,8 +1,8 @@
 #include <iostream>
 #include "FeatureMap.h"
 #include "Codecs.h"
-#include <vector>
 #include <fstream>
+#include <vector>
 #include <sstream>
 #include <string>
 #include <cstdio>
