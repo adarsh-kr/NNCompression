@@ -31,11 +31,16 @@ def Inverse_BHW_Format(comp_data, b, h, w, init_c, init_h, init_w, img_per_row):
     return final_data
 
 def Convert_BHW_Format(layerData):
+    
     # get the shape 
     batch, channel, height, width = layerData.shape
     # nearestSqr = getNearestPerfectSqr(channel)
-    nearestSqr = math.ceil(math.sqrt(channel))*math.ceil(math.sqrt(channel))
-
+    
+    buf = (math.sqrt(channel))
+    if buf%2==0:
+        nearestSqr = buf**2
+    else:
+        nearestSqr = (buf+1)**2
     
     final_h = int(math.sqrt(nearestSqr))*height
     final_w = int(math.sqrt(nearestSqr))*width
@@ -55,7 +60,6 @@ def Convert_BHW_Format(layerData):
 
     return finalData, batch, final_h, final_w, img_per_row   
 
-
 class CompressionLayer(nn.Module):
     def __init__(self, fileName, returnCompressedTensor=False, compress=True):
         super(CompressionLayer, self).__init__()
@@ -70,11 +74,10 @@ class CompressionLayer(nn.Module):
         if not self.training:
             
             if self.compress:
-                
                 init_b, init_c, init_h, init_w = x.shape
                 data, b, h, w, img_per_row = Convert_BHW_Format(x)
                 start = time.time()
-                
+                print("New height : {0}, new width {1}".format(h, w))
                 try:
                     # comp_data is going to be one dimensional b*h
                     comp_data = wrap.compress(data, data.min(), data.max(), b, h, w, "random", PRESET_PARAMETER)

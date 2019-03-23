@@ -107,8 +107,6 @@ def write_results(prediction, confidence, num_classes, nms_conf = 0.4):
     batch_size = prediction.size(0)
 
     write = False
-    
-
 
     for ind in range(batch_size):
         image_pred = prediction[ind]          #image Tensor
@@ -137,7 +135,6 @@ def write_results(prediction, confidence, num_classes, nms_conf = 0.4):
         
         for cls in img_classes:
             #perform NMS
-
         
             #get the detections with one particular class
             cls_mask = image_pred_*(image_pred_[:,-1] == cls).float().unsqueeze(1)
@@ -177,7 +174,7 @@ def write_results(prediction, confidence, num_classes, nms_conf = 0.4):
                 write = True
             else:
                 out = torch.cat(seq,1)
-                output = torch.cat((output,out))
+                output = torch.cat((output, out))
 
     try:
         return output

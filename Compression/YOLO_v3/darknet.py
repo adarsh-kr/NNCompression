@@ -132,7 +132,7 @@ def create_modules(blocks):
             #end, if there exists one.
             try:
                 end = int(x["layers"][1])
-            except:
+            except: 
                 end = 0
             #Positive anotation
             if start > 0: 
@@ -190,7 +190,7 @@ class Darknet(nn.Module):
         
         write = 0
         for i, module in enumerate(modules):        
-            print(i)
+            # print(i)
             module_type = (module["type"])
             
             if module_type == "convolutional" or module_type == "upsample":
@@ -239,7 +239,7 @@ class Darknet(nn.Module):
                     detections = torch.cat((detections, x), 1)
         
             outputs[i] = x
-            # print(x.shape)
+            print(x.shape)
             out = self.compression_list[i](x)
         
         return detections
@@ -249,7 +249,7 @@ class Darknet(nn.Module):
         #Open the weights file
         fp = open(weightfile, "rb")
     
-        #The first 5 values are header information 
+        # The first 5 values are header information 
         # 1. Major version number
         # 2. Minor Version Number
         # 3. Subversion number 
