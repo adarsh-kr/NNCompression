@@ -36,12 +36,12 @@ def Convert_BHW_Format(layerData):
     batch, channel, height, width = layerData.shape
     # nearestSqr = getNearestPerfectSqr(channel)
     
-    buf = (math.sqrt(channel))
+    buf = math.ceil((math.sqrt(channel)))
     if buf%2==0:
         nearestSqr = buf**2
     else:
         nearestSqr = (buf+1)**2
-    
+    # nearestSqr = 
     final_h = int(math.sqrt(nearestSqr))*height
     final_w = int(math.sqrt(nearestSqr))*width
 

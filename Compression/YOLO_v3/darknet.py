@@ -239,8 +239,8 @@ class Darknet(nn.Module):
                     detections = torch.cat((detections, x), 1)
         
             outputs[i] = x
-            print(x.shape)
-            out = self.compression_list[i](x)
+            # print(x.shape)
+            # out = self.compression_list[i](x)
         
         return detections
 

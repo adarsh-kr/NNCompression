@@ -40,11 +40,17 @@ def arg_parse():
     parser.add_argument("--reso", dest = 'reso', help = 
                         "Input resolution of the network. Increase to increase accuracy. Decrease to increase speed",
                         default = "416", type = str)
+
+    parser.add_argument("--outputFile", type=str, default="/home/adarsh/Desktop/RAWork/NNCompression/results/YOLO/")
+    parser.add_argument("--videoName",   type=str, default="Lausanne")
     
+
     return parser.parse_args()
     
 args = arg_parse()
 images = args.images
+outputFile = args.outputFile + args.videoName + "/" + "OutputFile"  
+writer = open(outputFile, "w")
 batch_size = int(args.bs)
 confidence = float(args.confidence)
 nms_thesh = float(args.nms_thresh)
@@ -83,7 +89,6 @@ read_dir = time.time()
 try:
     sortedImgs = sorted(os.listdir(images))
     imlist = [osp.join(osp.realpath('.'), images, img) for img in sortedImgs]
-    print(imlist)
 except NotADirectoryError:
     imlist = []
     imlist.append(osp.join(osp.realpath('.'), images))
@@ -134,7 +139,7 @@ for i, batch in enumerate(im_batches):
         for im_num, image in enumerate(imlist[i*batch_size: min((i +  1)*batch_size, len(imlist))]):
             im_id = i*batch_size + im_num
             print("{0:20s} predicted in {1:6.3f} seconds".format(image.split("/")[-1], (end - start)/batch_size))
-            print("{0:20s} {1:s}".format("Objects Detected:", ""))
+            print("{0:20s} {1:s}".format("Objects Detected:", " ".join(objs)))
             print("----------------------------------------------------------")
         continue
 
@@ -148,10 +153,12 @@ for i, batch in enumerate(im_batches):
 
     for im_num, image in enumerate(imlist[i*batch_size: min((i +  1)*batch_size, len(imlist))]):
         im_id = i*batch_size + im_num
-        objs = [classes[int(x[-1])] for x in output if int(x[0]) == im_id]
+        objs  = [classes[int(x[-1])] for x in output if int(x[0]) == im_id]
         print("{0:20s} predicted in {1:6.3f} seconds".format(image.split("/")[-1], (end - start)/batch_size))
         print("{0:20s} {1:s}".format("Objects Detected:", " ".join(objs)))
-        print("----------------------------------------------------------")
+        writer.write("{0}:{1}\n".format(imlist[im_id], ",".join(objs)))
+        # print("----------------------------------------------------------")
+        
 
     if CUDA:
         torch.cuda.synchronize()       

@@ -1,7 +1,5 @@
-*.pgm
-*.jpeg
-*.jpg
-datasets/
-results/
 .vscode
 *.weights
+*.mp4
+*.mpeg
+
