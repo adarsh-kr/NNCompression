@@ -47,11 +47,11 @@ def arg_parse():
 
     return parser.parse_args()
 
-
+time.sleep(10)
 args = arg_parse()
 images = args.images
-outputFile = args.outputFile + args.videoName + "/" + "OutputFile"  
-# writer = open(outputFile, "w")
+outputFile = args.outputFile +  "OutputFile"  
+writer = open(outputFile, "w")
 batch_size = int(args.bs)
 confidence = float(args.confidence)
 nms_thesh = float(args.nms_thresh)

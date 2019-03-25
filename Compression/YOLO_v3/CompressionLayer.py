@@ -1,4 +1,4 @@
-import os
+import os,gc
 import torch 
 import torchvision
 import torchvision.transforms as transforms
@@ -28,7 +28,6 @@ def Inverse_BHW_Format(comp_data, b, h, w, init_c, init_h, init_w, img_per_row):
             top_left_corner_col = int(((j)%img_per_row)*init_w)
             channel_j = comp_data[i, top_left_corner_row:(top_left_corner_row+init_h), top_left_corner_col:(top_left_corner_col+init_w)]
             final_data[i, j, :, : ] = channel_j
-    del comp_data
     return final_data
 
 def Convert_BHW_Format(layerData):
@@ -58,7 +57,6 @@ def Convert_BHW_Format(layerData):
             top_left_corner_row   = int((i)/img_per_row)*height
             top_left_corner_col = int(((i)%img_per_row)*width)
             finalData[j, top_left_corner_row:(top_left_corner_row+height), top_left_corner_col:(top_left_corner_col+width)] = img
-    del data
     return finalData, batch, final_h, final_w, img_per_row   
 
 class CompressionLayer(nn.Module):
@@ -86,15 +84,16 @@ class CompressionLayer(nn.Module):
                     print(" bored bored bored ")
                 
                 del data
-
+                del comp_data
+                gc.collect()
                 end = time.time()
                 
                 elapsedTime = end - start
                 # get file size
                 fsize = os.path.getsize("random")
 
-                comp_x = Inverse_BHW_Format(comp_data, b, h, w, init_c, init_h, init_w, img_per_row)
-                comp_x = torch.from_numpy(comp_x).type(torch.FloatTensor)        
+                #comp_x = Inverse_BHW_Format(comp_data, b, h, w, init_c, init_h, init_w, img_per_row)
+                #comp_x = torch.from_numpy(comp_x).type(torch.FloatTensor)        
                 
                 rmse_I   = 0 # torch.mean(abs(comp_x - x)/abs(x+1))
                 rmse_II  = 1 # torch.mean(abs(comp_x - x)/abs(x+1))
