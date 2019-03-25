@@ -85,27 +85,54 @@ def moveFilteredFiles(filteredFile, frameFolder, outputFolder):
         print("{} Frames Filtered".format(count))
         print("Filtered File Move Done")
 
+def filterFilesTinyYOLO(videoname, label):
+    resultsFile = "/home/adarsh/Desktop/RAWork/NNCompression/results/YOLO/TopKTinyYolo/{}/result.txt".format(videoname)
+    outputpath = "/home/adarsh/Desktop/RAWork/NNCompression/results/YOLO/TopKTinyYolo/{}/filteredFrames".format(videoname)
+
+    # create a dir if not exists
+    if not os.path.exists(outputpath):
+        os.makedirs(outputpath)
+
+    frame = ""
+    count = 0
+    with open(resultsFile) as f:
+        data = f.read()
+        lines = data.split("Enter Image Path")
+        for line in lines:
+            if len(line)<5:
+                continue
+            if "seen 64" in line:
+                continue
+            frame = line.split("\n")[0].split(":")[1].strip()
+            img_name = "out{:04d}".format(count)
+            if "\n" + label + ": " in line:
+                print(img_name)
+                shutil.copyfile(frame, outputpath+"/"+img_name)
+                count+=1
+                
+
 if __name__ == "__main__":
     # parser
     parser = argparse.ArgumentParser(description="TopK Filtering")
     parser.add_argument('--k', default=1, type=int, help = 'value for K, in top K')
     parser.add_argument('--classId', default=0, type = int, help="index of the class")
     parser.add_argument('--video_name', default="Lausanne", type = str, help="video name")
+    parser.add_argument('--label', default="person", type = str, help="class name")
 
     args = parser.parse_args()
     
-    create_topK_file("../results/TopKFiltering/{}/topKClassProb".format(args.video_name), "../results/TopKFiltering/{}/topKClassProb.txt".format(args.video_name))
+    # create_topK_file("../results/TopKFiltering/{}/topKClassProb".format(args.video_name), "../results/TopKFiltering/{}/topKClassProb.txt".format(args.video_name))
     
-    topKFilter("../results/TopKFiltering/{}/topKClassProb.txt".format(args.video_name)
-                ,args.k
-                ,args.classId
-                ,"../results/TopKFiltering/{0}/filteredFramesIds_classId_{1}.txt".format(args.video_name, args.classId)
-                ,"../results/TopKFiltering/{0}/obj_map.txt".format(args.video_name))
+    # topKFilter("../results/TopKFiltering/{}/topKClassProb.txt".format(args.video_name)
+    #             ,args.k
+    #             ,args.classId
+    #             ,"../results/TopKFiltering/{0}/filteredFramesIds_classId_{1}.txt".format(args.video_name, args.classId)
+    #             ,"../results/TopKFiltering/{0}/obj_map.txt".format(args.video_name))
     
-    moveFilteredFiles("../results/TopKFiltering/{0}/filteredFramesIds_classId_{1}.txt".format(args.video_name, args.classId),
-                      "/home/adarsh/Desktop/RAWork/NNCompression/datasets/{}/frames/0/".format(args.video_name),
-                      "/home/adarsh/Desktop/RAWork/NNCompression/results/TopKFiltering/{0}/filteredFrames_classId_{1}".format(args.video_name, args.classId))
+    # moveFilteredFiles("../results/TopKFiltering/{0}/filteredFramesIds_classId_{1}.txt".format(args.video_name, args.classId),
+    #                   "/home/adarsh/Desktop/RAWork/NNCompression/datasets/{}/frames/0/".format(args.video_name),
+    #                   "/home/adarsh/Desktop/RAWork/NNCompression/results/TopKFiltering/{0}/filteredFrames_classId_{1}".format(args.video_name, args.classId))
 
 
     # getBackgroundImage("../datasets/Lausanne/frames/")
-
+    filterFilesTinyYOLO(args.video_name, args.label)
