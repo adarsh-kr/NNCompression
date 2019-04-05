@@ -51,7 +51,7 @@ time.sleep(10)
 args = arg_parse()
 images = args.images
 outputFile = args.outputFile +  "OutputFile"  
-writer = open(outputFile, "w")
+#writer = open(outputFile, "w")
 batch_size = int(args.bs)
 confidence = float(args.confidence)
 nms_thesh = float(args.nms_thresh)
@@ -59,7 +59,7 @@ start = 0
 CUDA = torch.cuda.is_available()
 
 num_classes = 80
-classes = load_classes("data/coco.names")
+classes = load_classes("data_II/coco.names")
 
 
 #Set up the neural network
@@ -156,7 +156,7 @@ for i, batch in enumerate(im_batches):
         objs  = [classes[int(x[-1])] for x in output if int(x[0]) == im_id]
         print("{0:20s} predicted in {1:6.3f} seconds".format(image.split("/")[-1], (end - start)/batch_size))
         print("{0:20s} {1:s}".format("Objects Detected:", " ".join(objs)))
-        writer.write("{0}:{1}\n".format(imlist[im_id], ",".join(objs)))
+        #writer.write("{0}:{1}\n".format(imlist[im_id], ",".join(objs)))
         # print("----------------------------------------------------------")
         
 
