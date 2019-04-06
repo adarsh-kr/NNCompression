@@ -93,6 +93,8 @@ def predict_transform(prediction, inp_dim, anchors, num_classes, CUDA = True):
     
     return prediction
 
+
+
 def write_results(prediction, confidence, num_classes, nms_conf = 0.4):
     conf_mask = (prediction[:,:,4] > confidence).float().unsqueeze(2)
     prediction = prediction*conf_mask
@@ -105,13 +107,14 @@ def write_results(prediction, confidence, num_classes, nms_conf = 0.4):
     prediction[:,:,:4] = box_corner[:,:,:4]
     
     batch_size = prediction.size(0)
-
+    
     write = False
 
     for ind in range(batch_size):
         image_pred = prediction[ind]          #image Tensor
-       #confidence threshholding 
-       #NMS
+        
+        #confidence threshholding 
+        #NMS
     
         max_conf, max_conf_score = torch.max(image_pred[:,5:5+ num_classes], 1)
         max_conf = max_conf.float().unsqueeze(1)
@@ -120,18 +123,17 @@ def write_results(prediction, confidence, num_classes, nms_conf = 0.4):
         image_pred = torch.cat(seq, 1)
         
         non_zero_ind =  (torch.nonzero(image_pred[:,4]))
+        
         try:
             image_pred_ = image_pred[non_zero_ind.squeeze(),:].view(-1,7)
         except:
             continue
-        
+       
         if image_pred_.shape[0] == 0:
             continue       
-#        
-  
-        #Get the various classes detected in the image
-        img_classes = unique(image_pred_[:,-1])  # -1 index holds the class index
         
+        # Get the various classes detected in the image
+        img_classes = unique(image_pred_[:,-1])  # -1 index holds the class index
         
         for cls in img_classes:
             #perform NMS
@@ -177,6 +179,7 @@ def write_results(prediction, confidence, num_classes, nms_conf = 0.4):
                 output = torch.cat((output, out))
 
     try:
+        print(output)
         return output
     except:
         return 0

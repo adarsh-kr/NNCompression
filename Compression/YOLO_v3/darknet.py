@@ -240,7 +240,7 @@ class Darknet(nn.Module):
         
             outputs[i] = x
             # print(x.shape)
-            self.compression_list[i](x)
+            #self.compression_list[i](x)
         
         return detections
 

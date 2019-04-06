@@ -47,7 +47,7 @@ def arg_parse():
 
     return parser.parse_args()
 
-time.sleep(10)
+#time.sleep(10)
 args = arg_parse()
 images = args.images
 outputFile = args.outputFile +  "OutputFile"  
