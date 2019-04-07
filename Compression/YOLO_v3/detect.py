@@ -45,8 +45,6 @@ def arg_parse():
     parser.add_argument("--videoName",   type=str, default="Lausanne")
 
     parser.add_argument('--topK', type=int, default=3)
-   
-
 
     return parser.parse_args()
 
@@ -130,6 +128,7 @@ if CUDA:
     
 start_det_loop = time.time()
 for i, batch in enumerate(im_batches):
+    print("Batch : {}".format(i))
 #load the image 
     start = time.time()
     if CUDA:
@@ -138,7 +137,7 @@ for i, batch in enumerate(im_batches):
         prediction = model(Variable(batch), CUDA)
 
     #prediction = write_results(prediction, confidence, num_classes, nms_conf = nms_thesh)
-    prediction = write_results_topK(prediction, confidence, num_classes, nms_conf=nms_thesh, k=topK)
+    prediction = write_results_topK(prediction, confidence, num_classes, nms_conf=nms_thesh, k=args.topK)
     end = time.time()
 
     if type(prediction) == int:
@@ -161,14 +160,15 @@ for i, batch in enumerate(im_batches):
     for im_num, image in enumerate(imlist[i*batch_size: min((i +  1)*batch_size, len(imlist))]):
         im_id = i*batch_size + im_num 
         objs  = [classes[int(x[-1])] for x in output if int(x[0]) == im_id]
-        topk_objs = [[classes[int(y)] for y in x[6:6+topK]]  for x in output if int(x[0])==im_id]
-        topk_objs_id = [[str(y) for y in x[6:6+topK] for x in output if int(x[0])==im_id]]
-
-        print("{0:20s} predicted in {1:6.3f} seconds".format(image.split("/")[-1], (end - start)/batch_size))
-        print("{0:20s} {1:s}".format("Objects Detected:", " ".join(objs)))
+        
+        topk_objs    = [[classes[int(y)] for y in x[6:6+args.topK]]  for x in output if int(x[0])==im_id]
+        topk_objs_id = [[str(y) for y in x[6:6+args.topK]]  for x in output if int(x[0])==im_id]
+        
+        #print("{0:20s} predicted in {1:6.3f} seconds".format(image.split("/")[-1], (end - start)/batch_size))
+        #print("{0:20s} {1:s}".format("Objects Detected:", " ".join(objs)))
         
         obj_id    = ','.join(['_'.join(x)  for x  in topk_objs_id])
-        obj_names = ','.join(['_'].join(x) for x in topk_objs)
+        obj_names = ','.join(['_'.join(x) for x in topk_objs])
          
         writer_1.write(str(im_id) + "," + obj_id + "\n")
         writer_2.write(str(im_id) + "," + obj_names + "\n")

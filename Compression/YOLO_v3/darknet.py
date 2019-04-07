@@ -190,7 +190,7 @@ class Darknet(nn.Module):
         
         write = 0
         for i, module in enumerate(modules):        
-            print(i)
+            #print(i)
             module_type = (module["type"])
             
             if module_type == "convolutional" or module_type == "upsample":

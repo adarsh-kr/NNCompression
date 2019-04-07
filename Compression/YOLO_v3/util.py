@@ -181,8 +181,8 @@ def write_results_topK(prediction, confidence, num_classes, nms_conf = 0.4, k=3)
                 output = torch.cat((output, out))
 
     try:
-        print(output.shape)
-        print(output)
+        #print(output.shape)
+        #print(output)
         return output
     except:
         return 0
@@ -208,7 +208,7 @@ def write_results(prediction, confidence, num_classes, nms_conf = 0.4):
         #confidence threshholding 
         #NMS
         max_conf, max_conf_score = torch.max(image_pred[:,5:5+ num_classes], 1)
-        print(max_conf_score.sum())
+        #print(max_conf_score.sum())
         max_conf = max_conf.float().unsqueeze(1)
         max_conf_score = max_conf_score.float().unsqueeze(1)
         seq = (image_pred[:,:5], max_conf, max_conf_score)
