@@ -41,8 +41,8 @@ def arg_parse():
                         "Input resolution of the network. Increase to increase accuracy. Decrease to increase speed",
                         default = "416", type = str)
 
-    parser.add_argument("--outputFile", type=str, default="/users/adarsh/NNCompression/results/YOLO/TopKTinyYolo/")
-    parser.add_argument("--videoName",   type=str, default="Lausanne")
+    parser.add_argument("--outputFile",  type=str,  default="default")
+    parser.add_argument("--videoName",   type=str,  default="Lausanne")
 
     parser.add_argument('--topK', type=int, default=3)
 
@@ -144,9 +144,9 @@ for i, batch in enumerate(im_batches):
 
         for im_num, image in enumerate(imlist[i*batch_size: min((i +  1)*batch_size, len(imlist))]):
             im_id = i*batch_size + im_num
-            print("{0:20s} predicted in {1:6.3f} seconds".format(image.split("/")[-1], (end - start)/batch_size))
-            print("{0:20s} {1:s}".format("Objects Detected:", " ".join(objs)))
-            print("----------------------------------------------------------")
+            #print("{0:20s} predicted in {1:6.3f} seconds".format(image.split("/")[-1], (end - start)/batch_size))
+            #print("{0:20s} {1:s}".format("Objects Detected:", " "))
+            #print("----------------------------------------------------------")
         continue
 
     prediction[:,0] += i*batch_size    #transform the atribute from index in batch to index in imlist 
@@ -170,8 +170,8 @@ for i, batch in enumerate(im_batches):
         obj_id    = ','.join(['_'.join(x)  for x  in topk_objs_id])
         obj_names = ','.join(['_'.join(x) for x in topk_objs])
          
-        writer_1.write(str(im_id) + "," + obj_id + "\n")
-        writer_2.write(str(im_id) + "," + obj_names + "\n")
+        writer_1.write(image.split("/")[-1] + "," + obj_id + "\n")
+        writer_2.write(image.split("/")[-1] + "," + obj_names + "\n")
 
     if CUDA:
         torch.cuda.synchronize()       

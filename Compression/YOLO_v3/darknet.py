@@ -49,6 +49,18 @@ def parse_cfg(cfgfile):
     
     return blocks
 
+class MaxPoolStride1(nn.Module):
+    def __init__(self, kernel_size):
+        super(MaxPoolStride1, self).__init__()
+        self.kernel_size = kernel_size
+        self.pad = kernel_size - 1
+    
+    def forward(self, x):
+        padded_x = F.pad(x, (0,self.pad,0,self.pad), mode="replicate")
+        pooled_x = nn.MaxPool2d(self.kernel_size, self.pad)(padded_x)
+        return pooled_x
+
+
 class EmptyLayer(nn.Module):
     def __init__(self):
         super(EmptyLayer, self).__init__()
@@ -153,7 +165,18 @@ def create_modules(blocks):
             shortcut = EmptyLayer()
             module.add_module("shortcut_{}".format(index), shortcut)
             compressionModule.add_module("LayerOutputShortcut_{0}".format(index), CompressionLayer("LayerOutput_{0}".format(index)))
+
+        elif x["type"] == "maxpool":
+            stride = int(x["stride"])
+            size = int(x["size"])
+            if stride != 1:
+                maxpool = nn.MaxPool2d(size, stride)
+            else:
+                maxpool = MaxPoolStride1(size)
             
+            module.add_module("maxpool_{}".format(index), maxpool)
+        
+        
         #Yolo is the detection layer
         elif x["type"] == "yolo":
             mask = x["mask"].split(",")
@@ -193,7 +216,7 @@ class Darknet(nn.Module):
             #print(i)
             module_type = (module["type"])
             
-            if module_type == "convolutional" or module_type == "upsample":
+            if module_type == "convolutional" or module_type == "upsample" or module_type == "maxpool":
                 x = self.module_list[i](x)
 
     
@@ -240,7 +263,7 @@ class Darknet(nn.Module):
         
             outputs[i] = x
             # print(x.shape)
-            #self.compression_list[i](x)
+            self.compression_list[i](x)
         
         return detections
 
