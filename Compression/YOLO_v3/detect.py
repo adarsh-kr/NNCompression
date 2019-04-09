@@ -41,10 +41,10 @@ def arg_parse():
                         "Input resolution of the network. Increase to increase accuracy. Decrease to increase speed",
                         default = "416", type = str)
 
-    parser.add_argument("--outputFile",  type=str,  default="default")
-    parser.add_argument("--videoName",   type=str,  default="Lausanne")
+    parser.add_argument("--outputFile",  type=str,  default="debug")
+    parser.add_argument("--videoName",   type=str,  default="debug")
 
-    parser.add_argument('--topK', type=int, default=3)
+    parser.add_argument('--topK', type=int, default=-1)
 
     return parser.parse_args()
 
@@ -107,7 +107,9 @@ loaded_ims = [cv2.imread(x) for x in imlist]
 
 im_batches  = list(map(prep_image, loaded_ims, [inp_dim for x in range(len(imlist))]))
 im_dim_list = [(x.shape[1], x.shape[0]) for x in loaded_ims]
+print(im_dim_list)
 im_dim_list = torch.FloatTensor(im_dim_list).repeat(1,2)
+print(im_dim_list)
 
 del loaded_ims
 
@@ -136,8 +138,11 @@ for i, batch in enumerate(im_batches):
     with torch.no_grad():
         prediction = model(Variable(batch), CUDA)
 
-    #prediction = write_results(prediction, confidence, num_classes, nms_conf = nms_thesh)
-    prediction = write_results_topK(prediction, confidence, num_classes, nms_conf=nms_thesh, k=args.topK)
+    if args.topK!=-1:
+        prediction = write_results(prediction, confidence, num_classes, nms_conf = nms_thesh)
+    else:
+        prediction = write_results_topK(prediction, confidence, num_classes, nms_conf=nms_thesh, k=args.topK)
+    
     end = time.time()
 
     if type(prediction) == int:
@@ -181,19 +186,20 @@ except NameError:
     print ("No detections were made")
     exit()
 
-# im_dim_list = torch.index_select(im_dim_list, 0, output[:,0].long())
+print(output)
+im_dim_list = torch.index_select(im_dim_list, 0, output[:,1].long())
 
-# scaling_factor = torch.min(416/im_dim_list,1)[0].view(-1,1)
+scaling_factor = torch.min(416/im_dim_list,1)[0].view(-1,1)
 
-# output[:,[1,3]] -= (inp_dim - scaling_factor*im_dim_list[:,0].view(-1,1))/2
-# output[:,[2,4]] -= (inp_dim - scaling_factor*im_dim_list[:,1].view(-1,1))/2
+output[:,[1,3]] -= (inp_dim - scaling_factor*im_dim_list[:,0].view(-1,1))/2
+output[:,[2,4]] -= (inp_dim - scaling_factor*im_dim_list[:,1].view(-1,1))/2
 
-# output[:,1:5] /= scaling_factor
+output[:,1:5] /= scaling_factor
 
-# for i in range(output.shape[0]):
-#     output[i, [1,3]] = torch.clamp(output[i, [1,3]], 0.0, im_dim_list[i,0])
-#     output[i, [2,4]] = torch.clamp(output[i, [2,4]], 0.0, im_dim_list[i,1])
-    
+for i in range(output.shape[0]):
+    output[i, [1,3]] = torch.clamp(output[i, [1,3]], 0.0, im_dim_list[i,0])
+    output[i, [2,4]] = torch.clamp(output[i, [2,4]], 0.0, im_dim_list[i,1])
+   
     
 # output_recast = time.time()
 # class_load = time.time()

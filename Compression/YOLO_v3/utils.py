@@ -1,9 +1,11 @@
-import os
+import os, argparse
 import os.path
 import numpy as np
 from shutil import copyfile
 import subprocess
 import time
+import re
+from shutil import copyfile
 
 def BaselineVideoSize(dir, batchsize):
     files_path = sorted([dir + x for x in os.listdir(dir)])
@@ -47,23 +49,30 @@ def makeSequential(dir):
             
 
 
-def YOLOCompressionPlot(dir=".", fileFormat="LayerOutput_{0}", num_layers=60):
+def YOLOCompressionPlot(videoName, objClass, dir="../../results/YOLO/CompressionStats", fileFormat="LayerOutput_{0}", num_layers=105):
 
     layerAvgCompression = []
     layerAvgTime = []
     layerSumCompression = []
+    
+    dir = os.path.join(dir, videoName, objClass)
+
     for i in range(num_layers):
+        if i==82 or i==94:
+            continue
         file = dir + "/" + fileFormat.format(i)
         with open(file) as f:
             data = np.loadtxt(file, delimiter=",")
             avgCompression = data.mean(axis=0)[0]
             avgTime = data.mean(axis=0)[1]
+            totalCompression = data.sum(axis=0)[0]
             layerAvgCompression = layerAvgCompression + [avgCompression]
             layerAvgTime = layerAvgTime + [avgTime]
-    
+            layerSumCompression = layerSumCompression + [totalCompression] 
 
     print(layerAvgCompression)
     print(layerAvgTime)
+    print(layerSumCompression)
 # plot resnet plot 
 def ResNetAvgCompressionPlot(dir="Compression/"
                             , layers=[3, 3, 23, 3], fileFormat="LayerData_layerNum_{0}_blockNum_{1}"):
@@ -129,10 +138,81 @@ def MobileNetAvgCompressionPlot(dir="models/results/CaliforniaI_600/1fps/MobileN
     print(layerAvgTime)
     print(layerTotalCompression)
 
+def TopkFilteredFiles(videoName, objClass, resultDir="../../results/YOLO/TopKFiltering", frameDir="../../datasets/"):
+   resultFile = os.path.join(resultDir, videoName, "result_name.txt")
+   frameDir = os.path.join(frameDir, videoName, "frames/0/")
+   outDir = os.path.join(resultDir, videoName, "filteredFrames", objClass)
+   
+   if not os.path.isdir(outDir):
+       os.mkdir(outDir)
+
+   count = 0
+   
+   with open(resultFile) as f:
+       lines = f.readlines()
+       for line in lines:
+           parsedLine = re.split('_|,| ', line.strip())
+           imgName = parsedLine[0]
+           
+           if objClass in parsedLine:
+               src = os.path.join(frameDir, imgName)
+               dst = os.path.join(outDir, "out{:04d}.jpg".format(count))
+               copyfile(src, dst)
+               count += 1
+           
+           if count%100==0:
+               print("Count Done {}".format(count))
+
+
+def CalcRecall(videoName, objClass, resultDir="../../results/YOLO/TopKTinyYolo", realLabels="../../results/YOLO/RealLabels"):
+    groundTruth = os.path.join(realLabels, videoName, "result_name.txt")
+    miniYolo = os.path.join(resultDir, videoName, "result_name.txt")
+
+    with open(groundTruth) as file1, open(miniYolo) as file2:
+        totalCount = 0
+        presentCount = 0
+        
+        groundDict = {}
+        yoloDict = {}
+        
+        for line1 in file1:
+            parsedLine1 = line1.strip().split(',')
+            groundDict[parsedLine1[0]]=[x.split("_")[0] for x in parsedLine1]
+
+        for line2 in file2:
+            parsedLine2 = re.split('_|,| ', line2.strip())
+            yoloDict[parsedLine2[0]] = parsedLine2
+        
+        for key, value in groundDict.items():
+
+            if objClass in groundDict[key]:
+                totalCount+=1
+                if key in yoloDict.keys():
+                    presentCount+=1
+
+
+            
+        print("Recall {0}, {1}, {2}".format(presentCount/totalCount, presentCount, totalCount))
 
 
 if __name__ == "__main__":
-    YOLOCompressionPlot()
+    parser = argparse.ArgumentParser(description='YOLO v3 Detection Module')
+    parser.add_argument("--videoName",  help = "Image / Directory containing images to perform detection upon", default = "imgs", type = str)
+    parser.add_argument("--TopKFilter", action='store_true')
+    parser.add_argument("--resultDir",  type=str, default="../../results/YOLO/TopKTinyYolo/")
+    parser.add_argument("--frameDir",   type=str, default="../../datasets/")
+    parser.add_argument("--objClass",   type=str, default="person")
+    parser.add_argument('--recall', action='store_true')
+    parser.add_argument('--plot', action='store_true')
+
+    args = parser.parse_args()
+    
+    if args.TopKFilter:
+        TopkFilteredFiles(args.videoName, args.objClass, resultDir=args.resultDir, frameDir=args.frameDir)
+    if args.recall:
+        CalcRecall(args.videoName, args.objClass)
+    if args.plot:
+        YOLOCompressionPlot(args.videoName, args.objClass)
     #ResNetAvgCompressionPlot()
     # BaselineVideoSize("Compression/data/CaliforniaI_600/1/", 1)    
     # MobileNetAvgCompressionPlot()

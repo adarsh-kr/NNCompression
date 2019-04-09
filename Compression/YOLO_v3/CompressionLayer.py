@@ -13,7 +13,7 @@ import time
 import wrap
 
 # preset : ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow, placebo
-PRESET_PARAMETER = 'fast'
+PRESET_PARAMETER = 'ultrafast'
 
 
 def Inverse_BHW_Format(comp_data, b, h, w, init_c, init_h, init_w, img_per_row):
@@ -83,8 +83,6 @@ class CompressionLayer(nn.Module):
                 except:
                     print(" bored bored bored ")
                 
-                del data
-                del comp_data
                 gc.collect()
                 end = time.time()
                 
@@ -92,13 +90,13 @@ class CompressionLayer(nn.Module):
                 # get file size
                 fsize = os.path.getsize("random")
 
-                #comp_x = Inverse_BHW_Format(comp_data, b, h, w, init_c, init_h, init_w, img_per_row)
-                #comp_x = torch.from_numpy(comp_x).type(torch.FloatTensor)        
+                comp_x = Inverse_BHW_Format(comp_data, b, h, w, init_c, init_h, init_w, img_per_row)
+                comp_x = torch.from_numpy(comp_x).type(torch.FloatTensor)        
                 
-                rmse_I   = 0 # torch.mean(abs(comp_x - x)/abs(x+1))
-                rmse_II  = 1 # torch.mean(abs(comp_x - x)/abs(x+1))
-                rmse_III = 2 # torch.mean(abs(comp_x - x)/abs(x+10^-6)) 
-                rmse_IV  = 3 # torch.mean(2*abs(comp_x - x)/(abs(x) + abs(y))) 
+                rmse_I   = torch.mean(abs(comp_x - x)/abs(x+1))
+                rmse_II  = torch.mean(abs(comp_x - x)/abs(x+1))
+                rmse_III = torch.mean(abs(comp_x - x - 10**-6)/abs(x+10**-6)) 
+                rmse_IV  = torch.mean(2*abs(comp_x - x)/(abs(x) + abs(comp_x))) 
 
                 with open(self.fileName, "a") as f:
                     f.write("{0},{1},{2},{3},{4},{5}\n".format(fsize, elapsedTime, rmse_I, rmse_II, rmse_III, rmse_IV))
