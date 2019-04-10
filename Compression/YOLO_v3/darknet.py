@@ -126,7 +126,8 @@ def create_modules(blocks):
                 activn = nn.LeakyReLU(0.1, inplace = True)
                 module.add_module("leaky_{0}".format(index), activn)
 
-            compressionModule.add_module("LayerOutputConv_{0}".format(index), CompressionLayer("LayerOutput_{0}".format(index)))
+            if index==1:
+                compressionModule.add_module("LayerOutputConv_{0}".format(index), CompressionLayer("LayerOutput_{0}".format(index), returnCompressedTensor=True, compress=True))
 
             #If it's an upsampling layer
             #We use Bilinear2dUpsampling
@@ -261,9 +262,11 @@ class Darknet(nn.Module):
                 else:       
                     detections = torch.cat((detections, x), 1)
         
+            
+            #if i==1:
+            #    x=self.compression_list[i](x)
+           
             outputs[i] = x
-            # print(x.shape)
-            #self.compression_list[i](x)
         
         return detections
 

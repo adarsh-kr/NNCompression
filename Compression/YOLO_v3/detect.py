@@ -111,7 +111,6 @@ print(im_dim_list)
 im_dim_list = torch.FloatTensor(im_dim_list).repeat(1,2)
 print(im_dim_list)
 
-del loaded_ims
 
 leftover = 0
 
@@ -138,7 +137,7 @@ for i, batch in enumerate(im_batches):
     with torch.no_grad():
         prediction = model(Variable(batch), CUDA)
 
-    if args.topK!=-1:
+    if args.topK==-1:
         prediction = write_results(prediction, confidence, num_classes, nms_conf = nms_thesh)
     else:
         prediction = write_results_topK(prediction, confidence, num_classes, nms_conf=nms_thesh, k=args.topK)
@@ -166,7 +165,9 @@ for i, batch in enumerate(im_batches):
         im_id = i*batch_size + im_num 
         objs  = [classes[int(x[-1])] for x in output if int(x[0]) == im_id]
         
+
         topk_objs    = [[classes[int(y)] for y in x[6:6+args.topK]]  for x in output if int(x[0])==im_id]
+        print(topk_objs)
         topk_objs_id = [[str(y) for y in x[6:6+args.topK]]  for x in output if int(x[0])==im_id]
         
         #print("{0:20s} predicted in {1:6.3f} seconds".format(image.split("/")[-1], (end - start)/batch_size))
@@ -186,8 +187,8 @@ except NameError:
     print ("No detections were made")
     exit()
 
-print(output)
-im_dim_list = torch.index_select(im_dim_list, 0, output[:,1].long())
+#print(output)
+im_dim_list = torch.index_select(im_dim_list, 0, output[:,0].long())
 
 scaling_factor = torch.min(416/im_dim_list,1)[0].view(-1,1)
 
@@ -200,49 +201,49 @@ for i in range(output.shape[0]):
     output[i, [1,3]] = torch.clamp(output[i, [1,3]], 0.0, im_dim_list[i,0])
     output[i, [2,4]] = torch.clamp(output[i, [2,4]], 0.0, im_dim_list[i,1])
    
-    
-# output_recast = time.time()
-# class_load = time.time()
-# colors = pkl.load(open("pallete", "rb"))
 
-# draw = time.time()
+output_recast = time.time()
+class_load = time.time()
+colors = pkl.load(open("pallete", "rb"))
 
-# def write(x, results):
-#     c1 = tuple(x[1:3].int())
-#     c2 = tuple(x[3:5].int())
-#     img = results[int(x[0])]
-#     cls = int(x[-1])
-#     color = random.choice(colors)
-#     label = "{0}".format(classes[cls])
-#     cv2.rectangle(img, c1, c2,color, 1)
-#     t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 1 , 1)[0]
-#     c2 = c1[0] + t_size[0] + 3, c1[1] + t_size[1] + 4
-#     cv2.rectangle(img, c1, c2,color, -1)
-#     cv2.putText(img, label, (c1[0], c1[1] + t_size[1] + 4), cv2.FONT_HERSHEY_PLAIN, 1, [225,255,255], 1);
-#     return img
+draw = time.time()
 
-
-# list(map(lambda x: write(x, loaded_ims), output))
-
-# det_names = pd.Series(imlist).apply(lambda x: "{}/det_{}".format(args.det,x.split("/")[-1]))
-
-# list(map(cv2.imwrite, det_names, loaded_ims))
+def write(x, results):
+ c1 = tuple(x[1:3].int())
+ c2 = tuple(x[3:5].int())
+ img = results[int(x[0])]
+ cls = int(x[-1])
+ color = random.choice(colors)
+ label = "{0}".format(classes[cls])
+ cv2.rectangle(img, c1, c2,color, 1)
+ t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 1 , 1)[0]
+ c2 = c1[0] + t_size[0] + 3, c1[1] + t_size[1] + 4
+ cv2.rectangle(img, c1, c2,color, -1)
+ cv2.putText(img, label, (c1[0], c1[1] + t_size[1] + 4), cv2.FONT_HERSHEY_PLAIN, 1, [225,255,255], 1);
+ return img
 
 
-# end = time.time()
+list(map(lambda x: write(x, loaded_ims), output))
 
-# print("SUMMARY")
-# print("----------------------------------------------------------")
-# print("{:25s}: {}".format("Task", "Time Taken (in seconds)"))
-# print()
-# print("{:25s}: {:2.3f}".format("Reading addresses", load_batch - read_dir))
-# print("{:25s}: {:2.3f}".format("Loading batch", start_det_loop - load_batch))
-# print("{:25s}: {:2.3f}".format("Detection (" + str(len(imlist)) +  " images)", output_recast - start_det_loop))
-# print("{:25s}: {:2.3f}".format("Output Processing", class_load - output_recast))
-# print("{:25s}: {:2.3f}".format("Drawing Boxes", end - draw))
-# print("{:25s}: {:2.3f}".format("Average time_per_img", (end - load_batch)/len(imlist)))
-# print("----------------------------------------------------------")
+det_names = pd.Series(imlist).apply(lambda x: "{}/det_{}".format(args.det,x.split("/")[-1]))
+
+list(map(cv2.imwrite, det_names, loaded_ims))
 
 
-# torch.cuda.empty_cache()
-    
+end = time.time()
+
+print("SUMMARY")
+print("----------------------------------------------------------")
+print("{:25s}: {}".format("Task", "Time Taken (in seconds)"))
+print()
+print("{:25s}: {:2.3f}".format("Reading addresses", load_batch - read_dir))
+print("{:25s}: {:2.3f}".format("Loading batch", start_det_loop - load_batch))
+print("{:25s}: {:2.3f}".format("Detection (" + str(len(imlist)) +  " images)", output_recast - start_det_loop))
+print("{:25s}: {:2.3f}".format("Output Processing", class_load - output_recast))
+print("{:25s}: {:2.3f}".format("Drawing Boxes", end - draw))
+print("{:25s}: {:2.3f}".format("Average time_per_img", (end - load_batch)/len(imlist)))
+print("----------------------------------------------------------")
+
+
+torch.cuda.empty_cache()
+
