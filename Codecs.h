@@ -25,12 +25,12 @@ class Codecs
 {
     public:
         vector<FeatureMap> frames;
-        string fileName, preset_parameter; 
+        string fileName, preset_parameter, crf_value; 
         int height, width, batch;
         double q_min, q_max;
         //to add codec Id
         Codecs();
-        Codecs(vector<FeatureMap> data, int height, int width, double min_val, double max_val, int batch, string file, string preset_parameter);
+        Codecs(vector<FeatureMap> data, int height, int width, double min_val, double max_val, int batch, string file, string preset_parameter, string crf_value);
 
         // encode one frame, being called from Encode
         void EncodeFrame(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, FILE *outfile);

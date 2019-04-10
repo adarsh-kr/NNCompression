@@ -1,8 +1,8 @@
-herd_of_horses.jpg,,,,
-herd_of_horses_II.jpg,,,,
-herd_of_horses_III.jpg,,,,
-herd_of_horses_IV.jpg,,,,
-herd_of_horses_V.jpg,,,,
-herd_of_horses_VI.jpg,,,,
-herd_of_horses_VII.jpg,,,,
-herd_of_horses_VIII.jpg,,,,
+herd_of_horses.jpg,tensor(17.)_tensor(19.),tensor(17.)_tensor(18.),tensor(17.)_tensor(19.),tensor(17.)_tensor(18.)
+herd_of_horses_II.jpg,tensor(17.)_tensor(19.),tensor(17.)_tensor(18.),tensor(17.)_tensor(19.),tensor(17.)_tensor(18.)
+herd_of_horses_III.jpg,tensor(17.)_tensor(19.),tensor(17.)_tensor(18.),tensor(17.)_tensor(19.),tensor(17.)_tensor(18.)
+herd_of_horses_IV.jpg,tensor(17.)_tensor(19.),tensor(17.)_tensor(18.),tensor(17.)_tensor(19.),tensor(17.)_tensor(18.)
+herd_of_horses_V.jpg,tensor(17.)_tensor(19.),tensor(17.)_tensor(18.),tensor(17.)_tensor(19.),tensor(17.)_tensor(18.)
+herd_of_horses_VI.jpg,tensor(17.)_tensor(19.),tensor(17.)_tensor(18.),tensor(17.)_tensor(19.),tensor(17.)_tensor(18.)
+herd_of_horses_VII.jpg,tensor(17.)_tensor(19.),tensor(17.)_tensor(18.),tensor(17.)_tensor(19.),tensor(17.)_tensor(18.)
+herd_of_horses_VIII.jpg,tensor(17.)_tensor(19.),tensor(17.)_tensor(18.),tensor(17.)_tensor(19.),tensor(17.)_tensor(18.)

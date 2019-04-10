@@ -138,7 +138,7 @@ for i, batch in enumerate(im_batches):
     with torch.no_grad():
         prediction = model(Variable(batch), CUDA)
 
-    if args.topK!=-1:
+    if args.topK==-1:
         prediction = write_results(prediction, confidence, num_classes, nms_conf = nms_thesh)
     else:
         prediction = write_results_topK(prediction, confidence, num_classes, nms_conf=nms_thesh, k=args.topK)

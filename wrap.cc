@@ -8,7 +8,7 @@
 using namespace std;
 namespace py = pybind11;
 
-py::array_t<double> compress(py::array_t<double> data, double q_min, double q_max, int batch, int height, int width, string fileName, string preset_parameter="fast")
+py::array_t<double> compress(py::array_t<double> data, double q_min, double q_max, int batch, int height, int width, string fileName, string preset_parameter="fast", string crf_value="0")
 {
     py::buffer_info info = data.request();
     double *dataPtr = (double*) info.ptr;
@@ -31,7 +31,7 @@ py::array_t<double> compress(py::array_t<double> data, double q_min, double q_ma
     // cout<<"Q_Max"<<q_max<<endl;
     // cout<<allFrames.size()<<endl;
     
-    Codecs codecData(allFrames, height, width, q_min, q_max, batch, fileName, preset_parameter);
+    Codecs codecData(allFrames, height, width, q_min, q_max, batch, fileName, preset_parameter, crf_value);
     codecData.EncodeVideo();
     vector<FeatureMap> out = codecData.DecodeVideo();
     
