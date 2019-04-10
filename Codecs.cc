@@ -122,7 +122,7 @@ void Codecs::EncodeVideo()
     // TODO : can it take other formats 
     c->pix_fmt = AV_PIX_FMT_YUV420P;
 
-    av_opt_set(c->priv_data, "crf", "51", AV_OPT_SEARCH_CHILDREN);
+    av_opt_set(c->priv_data, "crf", "0", AV_OPT_SEARCH_CHILDREN);
 
     AVDictionary * codec_options( 0 );
     cout<<this->preset_parameter<<endl;
