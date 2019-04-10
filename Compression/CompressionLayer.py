@@ -36,7 +36,6 @@ def Convert_BHW_Format(layerData):
     # nearestSqr = getNearestPerfectSqr(channel)
     nearestSqr = math.ceil(math.sqrt(channel))*math.ceil(math.sqrt(channel))
 
-    
     final_h = int(math.sqrt(nearestSqr))*height
     final_w = int(math.sqrt(nearestSqr))*width
 
