@@ -45,7 +45,10 @@ def arg_parse():
     parser.add_argument("--videoName",   type=str,  default="debug")
 
     parser.add_argument('--topK', type=int, default=-1)
-
+    parser.add_argument('--cmprsLayerNum', type=int, default=-1, help='-1 means all layers run' )
+    parser.add_argument('--crf_value', type=str, default="0", help='constant rate factor')
+    parser.add_argument('--preset_value', type=str, default="ultrafast", help='present parameters, ultrafast, fast, slow, slower')
+    parser.add_argument('--runTillBatch', type=int, default='-1', help='run till this num o fbatch')
     return parser.parse_args()
 
 #time.sleep(10)
@@ -69,7 +72,7 @@ classes = load_classes("data_II/coco.names")
 
 #Set up the neural network
 print("Loading network.....")
-model = Darknet(args.cfgfile)
+model = Darknet(args.cfgfile, args)
 model.load_weights(args.weightsfile)
 print("Network successfully loaded")
 
@@ -107,9 +110,9 @@ loaded_ims = [cv2.imread(x) for x in imlist]
 
 im_batches  = list(map(prep_image, loaded_ims, [inp_dim for x in range(len(imlist))]))
 im_dim_list = [(x.shape[1], x.shape[0]) for x in loaded_ims]
-print(im_dim_list)
+#print(im_dim_list)
 im_dim_list = torch.FloatTensor(im_dim_list).repeat(1,2)
-print(im_dim_list)
+#print(im_dim_list)
 
 
 leftover = 0
@@ -129,6 +132,9 @@ if CUDA:
     
 start_det_loop = time.time()
 for i, batch in enumerate(im_batches):
+    if args.runTillBatch!=-1 and i>args.runTillBatch:
+        break
+
     print("Batch : {}".format(i))
 #load the image 
     start = time.time()
@@ -165,9 +171,8 @@ for i, batch in enumerate(im_batches):
         im_id = i*batch_size + im_num 
         objs  = [classes[int(x[-1])] for x in output if int(x[0]) == im_id]
         
-
         topk_objs    = [[classes[int(y)] for y in x[6:6+args.topK]]  for x in output if int(x[0])==im_id]
-        print(topk_objs)
+        #print(topk_objs)
         topk_objs_id = [[str(y) for y in x[6:6+args.topK]]  for x in output if int(x[0])==im_id]
         
         #print("{0:20s} predicted in {1:6.3f} seconds".format(image.split("/")[-1], (end - start)/batch_size))
@@ -209,8 +214,8 @@ colors = pkl.load(open("pallete", "rb"))
 draw = time.time()
 
 def write(x, results):
- c1 = tuple(x[1:3].int())
- c2 = tuple(x[3:5].int())
+ c1  = tuple(x[1:3].int())
+ c2  = tuple(x[3:5].int())
  img = results[int(x[0])]
  cls = int(x[-1])
  color = random.choice(colors)
@@ -222,11 +227,28 @@ def write(x, results):
  cv2.putText(img, label, (c1[0], c1[1] + t_size[1] + 4), cv2.FONT_HERSHEY_PLAIN, 1, [225,255,255], 1);
  return img
 
+def write2file(x, f, imlist):
+    x1, y1 = x[1:3].int()
+    x2, y2 = x[3:5].int()
+    cls = int(x[-1])
+    conf = float(x[-2])
+    label = classes[cls]
+    imgId = imlist[int(x[0])]
+    f.write("{0}, {1}, {2}, {3}, {4}, {5}, {6}\n".format(imgId.split('/')[-1], label, conf, x1, y1, x2, y2))
 
+    
 list(map(lambda x: write(x, loaded_ims), output))
 
-det_names = pd.Series(imlist).apply(lambda x: "{}/det_{}".format(args.det,x.split("/")[-1]))
+if args.cmprsLayerNum!=-1:
+    dir = os.path.join(args.outputFile, args.videoName, "labels")
+    if not os.path.exists(dir):
+        os.mkdir(dir)
+    path = open(os.path.join(dir, "crf_value_{0}_preset_value_{1}_layerNum_{2}".format(args.crf_value, args.preset_value, args.cmprsLayerNum)), "w")
+    print(path)
+    list(map(lambda x: write2file(x, path, imlist), output))
 
+
+det_names = pd.Series(imlist).apply(lambda x: "{}/det_{}".format(args.det,x.split("/")[-1]))
 list(map(cv2.imwrite, det_names, loaded_ims))
 
 

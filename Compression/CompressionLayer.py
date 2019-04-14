@@ -13,7 +13,8 @@ import time
 import wrap
 
 # preset : ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow, placebo
-PRESET_PARAMETER = 'fast'
+PRESET_PARAMETER = 'ultrafast'
+CRF_VALUE = "0"
 
 
 def Inverse_BHW_Format(comp_data, b, h, w, init_c, init_h, init_w, img_per_row):
@@ -75,11 +76,11 @@ class CompressionLayer(nn.Module):
                 
                 try:
                     # comp_data is going to be one dimensional b*h
-                    comp_data = wrap.compress(data, data.min(), data.max(), b, h, w, "random", PRESET_PARAMETER)
+                    comp_data = wrap.compress(data, data.min(), data.max(), b, h, w, "random", PRESET_PARAMETER, CRF_VALUE)
                 except:
                     print("Going to Exception")
                     time.sleep(5)
-                    comp_data = wrap.compress(data, data.min(), data.max(), b, h, w, "random", PRESET_PARAMETER)
+                    comp_data = wrap.compress(data, data.min(), data.max(), b, h, w, "random", PRESET_PARAMETER, CRF_VALUE)
 
                 end = time.time()
                 

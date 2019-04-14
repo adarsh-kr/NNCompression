@@ -1,5 +1,5 @@
 from __future__ import division
-
+import os, time
 import torch 
 import torch.nn as nn
 import torch.nn.functional as F 
@@ -74,12 +74,15 @@ class DetectionLayer(nn.Module):
         self.anchors = anchors
 
 
-def create_modules(blocks):
+def create_modules(blocks, cmprsLayerNum, args):
     net_info = blocks[0]     #Captures the information about the input and pre-processing    
     module_list = nn.ModuleList()
     compression_list = nn.ModuleList()
     prev_filters = 3
     output_filters = []
+    dir = os.path.join(args.outputFile, args.videoName, "crf_value_{0}_preset_value_{1}".format(args.crf_value, args.preset_value))
+    if not os.path.exists(dir):
+        os.makedirs(dir)
     
 
     for index, x in enumerate(blocks[1:]):
@@ -126,8 +129,8 @@ def create_modules(blocks):
                 activn = nn.LeakyReLU(0.1, inplace = True)
                 module.add_module("leaky_{0}".format(index), activn)
 
-            if index==1:
-                compressionModule.add_module("LayerOutputConv_{0}".format(index), CompressionLayer("LayerOutput_{0}".format(index), returnCompressedTensor=True, compress=True))
+            #if index==args.:
+             #   compressionModule.add_module("LayerOutputConv_{0}".format(index), CompressionLayer("LayerOutput_{0}".format(index), returnCompressedTensor=True, compress=True))
 
             #If it's an upsampling layer
             #We use Bilinear2dUpsampling
@@ -135,7 +138,7 @@ def create_modules(blocks):
             stride = int(x["stride"])
             upsample = nn.Upsample(scale_factor = 2, mode = "nearest")
             module.add_module("upsample_{}".format(index), upsample)
-            compressionModule.add_module("LayerOutputUpsample_{0}".format(index), CompressionLayer("LayerOutput_{0}".format(index)))
+            #compressionModule.add_module("LayerOutputUpsample_{0}".format(index), CompressionLayer("LayerOutput_{0}".format(index)))
                 
         #If it is a route layer
         elif (x["type"] == "route"):
@@ -159,13 +162,13 @@ def create_modules(blocks):
             else:
                 filters= output_filters[index + start]
 
-            compressionModule.add_module("LayerOutputRoute_{0}".format(index), CompressionLayer("LayerOutput_{0}".format(index)))
+            #compressionModule.add_module("LayerOutputRoute_{0}".format(index), CompressionLayer("LayerOutput_{0}".format(index)))
 
         #shortcut corresponds to skip connection
         elif x["type"] == "shortcut":
             shortcut = EmptyLayer()
             module.add_module("shortcut_{}".format(index), shortcut)
-            compressionModule.add_module("LayerOutputShortcut_{0}".format(index), CompressionLayer("LayerOutput_{0}".format(index)))
+            #compressionModule.add_module("LayerOutputShortcut_{0}".format(index), CompressionLayer("LayerOutput_{0}".format(index)))
 
         elif x["type"] == "maxpool":
             stride = int(x["stride"])
@@ -191,8 +194,24 @@ def create_modules(blocks):
             detection = DetectionLayer(anchors)
             module.add_module("Detection_{}".format(index), detection)
             
+            #compressionModule.add_module("LayerOutputYOLO_{0}".format(index), EmptyLayer())
+        
+        filePath = os.path.join(dir, "LayerOutputConv_{0}".format(index))
+
+        if x["type"] == "yolo":
             compressionModule.add_module("LayerOutputYOLO_{0}".format(index), EmptyLayer())
-            
+        else:
+
+            if cmprsLayerNum == -1:
+                    # if -1, then all compression after all layers, but return original value
+                    print(index)
+                    compressionModule.add_module("LayerOutputConv_{0}".format(index), CompressionLayer(filePath, returnCompressedTensor=False, compress=True, preset_value=args.preset_value, crf_value = args.crf_value))
+            else:
+                    if index == cmprsLayerNum:
+                    # in this case compression and returnCompressionTensor 
+                        compressionModule.add_module("LayerOutputConv_{0}".format(index), CompressionLayer(filePath, returnCompressedTensor=True, compress=True, preset_value=args.preset_value, crf_value = args.crf_value))
+                    else:
+                        compressionModule.add_module("LayerOutputConv_{0}".format(index), CompressionLayer(filePath, returnCompressedTensor=False, compress=False, preset_value=args.preset_value, crf_value = args.crf_value))
 
         module_list.append(module)
         compression_list.append(compressionModule)
@@ -202,11 +221,13 @@ def create_modules(blocks):
     return (net_info, module_list, compression_list)
 
 class Darknet(nn.Module):
-    def __init__(self, cfgfile):
+    def __init__(self, cfgfile, args):
         super(Darknet, self).__init__()
+        self.cmprsLayerNum = args.cmprsLayerNum 
         self.blocks = parse_cfg(cfgfile)
-        self.net_info, self.module_list, self.compression_list = create_modules(self.blocks)
-        
+        self.net_info, self.module_list, self.compression_list = create_modules(self.blocks, self.cmprsLayerNum, args)
+        self.modelDetails = open(os.path.join(args.outputFile, args.videoName, 'modelLayerTime.txt'),"w")
+
     def forward(self, x, CUDA):
         
         modules = self.blocks[1:]
@@ -215,6 +236,7 @@ class Darknet(nn.Module):
         write = 0
         for i, module in enumerate(modules):        
             #print(i)
+            start = time.time()
             module_type = (module["type"])
             
             if module_type == "convolutional" or module_type == "upsample" or module_type == "maxpool":
@@ -261,12 +283,22 @@ class Darknet(nn.Module):
         
                 else:       
                     detections = torch.cat((detections, x), 1)
-        
             
-            #if i==1:
-            #    x=self.compression_list[i](x)
-           
+            end = time.time()
+            layerTime = end - start
+            # run the compression layer 
+            start = time.time()
+            x = self.compression_list[i](x)
             outputs[i] = x
+            end = time.time()
+            
+            #time taken for compression
+            cmprsnTime = end-start
+            self.modelDetails.write("{0},{1},{2}\n".format(i, layerTime, cmprsnTime))
+            
+            #print(x.type())
+            #print(i, x.nelement()*x.element_size())
+            
         
         return detections
 

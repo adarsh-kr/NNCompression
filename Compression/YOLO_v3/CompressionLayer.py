@@ -14,6 +14,7 @@ import wrap
 
 # preset : ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow, placebo
 PRESET_PARAMETER = 'ultrafast'
+CRF_VALUE = "40"
 
 
 def Inverse_BHW_Format(comp_data, b, h, w, init_c, init_h, init_w, img_per_row):
@@ -60,13 +61,15 @@ def Convert_BHW_Format(layerData):
     return finalData, batch, final_h, final_w, img_per_row   
 
 class CompressionLayer(nn.Module):
-    def __init__(self, fileName, returnCompressedTensor=False, compress=False):
+    def __init__(self, fileName, returnCompressedTensor=False, compress=False, preset_value="ultrafast", crf_value="0"):
         super(CompressionLayer, self).__init__()
         self.fileName = fileName
-        print(self.fileName)
         # pooling for downsample
         self.returnCompressedTensor = returnCompressedTensor
         self.compress = compress
+        self.preset_value = preset_value
+        self.crf_value = crf_value 
+        print(self.fileName)
 
     def forward(self, x):
         # print(self.fileName)
@@ -79,7 +82,7 @@ class CompressionLayer(nn.Module):
                 print("New height : {0}, new width {1}".format(h, w))
                 try:
                     # comp_data is going to be one dimensional b*h
-                    comp_data = wrap.compress(data, data.min(), data.max(), b, h, w, "random", PRESET_PARAMETER)
+                    comp_data = wrap.compress(data, data.min(), data.max(), b, h, w, "random", self.preset_value, self.crf_value)
                 except:
                     print(" bored bored bored ")
                 

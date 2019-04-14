@@ -49,13 +49,15 @@ def makeSequential(dir):
             
 
 
-def YOLOCompressionPlot(videoName, objClass, dir="../../results/YOLO/CompressionStats", fileFormat="LayerOutput_{0}", num_layers=105):
+def YOLOCompressionPlot(videoName, objClass, dir="../../results/YOLO/CompressionStats", fileFormat="LayerOutputConv_{0}", num_layers=105, crf_value="0"):
 
     layerAvgCompression = []
     layerAvgTime = []
     layerSumCompression = []
     
-    dir = os.path.join(dir, videoName, objClass)
+    #dir = os.path.join(dir, videoName, objClass)
+    dir = os.path.join(dir, videoName, "crf_value_{}_preset_value_ultrafast".format(crf_value))
+    
 
     for i in range(num_layers):
         if i==82 or i==94:
@@ -204,6 +206,8 @@ if __name__ == "__main__":
     parser.add_argument("--objClass",   type=str, default="person")
     parser.add_argument('--recall', action='store_true')
     parser.add_argument('--plot', action='store_true')
+    parser.add_argument('--crf_value', type=str)
+
 
     args = parser.parse_args()
     
@@ -212,7 +216,7 @@ if __name__ == "__main__":
     if args.recall:
         CalcRecall(args.videoName, args.objClass)
     if args.plot:
-        YOLOCompressionPlot(args.videoName, args.objClass)
+        YOLOCompressionPlot(videoName=args.videoName,objClass=args.objClass, crf_value=args.crf_value)
     #ResNetAvgCompressionPlot()
     # BaselineVideoSize("Compression/data/CaliforniaI_600/1/", 1)    
     # MobileNetAvgCompressionPlot()
