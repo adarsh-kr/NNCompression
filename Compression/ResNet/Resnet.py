@@ -40,7 +40,8 @@ class BasicBlock(nn.Module):
                  stride=1,
                  downsample=None,
                  compress=False,
-                 returnCompressedTensor=False):
+                 returnCompressedTensor=False,
+                 CRFValue=0):
 
         super(BasicBlock, self).__init__()
         self.conv1 = conv3x3(inplanes, planes, stride)
@@ -51,7 +52,8 @@ class BasicBlock(nn.Module):
         self.downsample = downsample
         self.stride = stride
         self.fileName = fileName + "_layerNum_"+ str(layerNum) + "_blockNum_" + str(blockNum)
-        self.compressionLayer = CompressionLayer(self.fileName, returnCompressedTensor, compress)
+        self.CRFValue = CRFValue
+        self.compressionLayer = CompressionLayer(self.fileName, returnCompressedTensor, compress, self.CRFValue)
 
 
     def forward(self, x):
@@ -86,7 +88,8 @@ class Bottleneck(nn.Module):
 
     def __init__(self, inplanes, planes, fileName, layerNum, blockNum, stride=1, downsample=None, 
                  returnCompressedTensor=False,
-                 compress=False):
+                 compress=False,
+                 CRFValue=0):
         super(Bottleneck, self).__init__()
         self.conv1 = conv1x1(inplanes, planes)
         self.bn1 = nn.BatchNorm2d(planes)
@@ -98,7 +101,8 @@ class Bottleneck(nn.Module):
         self.downsample = downsample
         self.stride = stride
         self.fileName = fileName + "_layerNum_"+ str(layerNum) + "_blockNum_" + str(blockNum)
-        self.compressionLayer = CompressionLayer(self.fileName, returnCompressedTensor, compress)
+        self.CRFValue = CRFValue
+        self.compressionLayer = CompressionLayer(self.fileName, returnCompressedTensor, compress, self.CRFValue)
         print("Bottlenect : LayerNum {0} BlockNum {1} Compress {2} ReturnCompressedTesnor {3} ".format(layerNum, blockNum, compress, returnCompressedTensor))
 
     def forward(self, x):
@@ -133,7 +137,7 @@ class Bottleneck(nn.Module):
 
 class ResNet(nn.Module):
 
-    def __init__(self, block, layers, num_classes=1000, compressAtLayer=1, compressAtBlock=1):
+    def __init__(self, block, layers, num_classes=1000, compressAtLayer=1, compressAtBlock=1, CRFValue=0):
         super(ResNet, self).__init__()
         self.inplanes = 64
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3,
@@ -144,6 +148,8 @@ class ResNet(nn.Module):
         
         self.compressAtLayer = compressAtLayer
         self.compressAtBlock = compressAtBlock
+
+        self.CRFValue = CRFValue
 
         self.layer1 = self._make_layer(block, 64,  layers[0],  layerNum=1)
         self.layer2 = self._make_layer(block, 128, layers[1],  layerNum=2, stride=2)
@@ -186,19 +192,20 @@ class ResNet(nn.Module):
             )
 
         layers = []
+
         if self.compressAtLayer == layerNum and self.compressAtBlock==0:
-            layers.append(block(self.inplanes, planes, "LayerData", layerNum, 0, stride, downsample, compress=True, returnCompressedTensor=True))
+            layers.append(block(self.inplanes, planes, "LayerData", layerNum, 0, stride, downsample, compress=True, returnCompressedTensor=True, CRFValue=self.CRFValue))
         else: 
-            layers.append(block(self.inplanes, planes, "LayerData", layerNum, 0, stride, downsample, compress=False, returnCompressedTensor=False))
+            layers.append(block(self.inplanes, planes, "LayerData", layerNum, 0, stride, downsample, compress=False, returnCompressedTensor=False, CRFValue=self.CRFValue))
 
         self.inplanes = planes * block.expansion
         blockNum=0
         for _ in range(1, blocks):
             blockNum+=1
             if self.compressAtLayer == layerNum and self.compressAtBlock == blockNum: 
-                layers.append(block(self.inplanes, planes, "LayerData", layerNum, blockNum, compress=True, returnCompressedTensor=True))
+                layers.append(block(self.inplanes, planes, "LayerData", layerNum, blockNum, compress=True,  returnCompressedTensor=True, CRFValue=self.CRFValue))
             else:
-                layers.append(block(self.inplanes, planes, "LayerData", layerNum, blockNum, compress=False, returnCompressedTensor=False))
+                layers.append(block(self.inplanes, planes, "LayerData", layerNum, blockNum, compress=False, returnCompressedTensor=False, CRFValue=self.CRFValue))
 
         return nn.Sequential(*layers)
 

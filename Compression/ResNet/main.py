@@ -53,6 +53,7 @@ parser.add_argument("--video_name", type=str, default="Lausanne", help='name of 
 
 parser.add_argument("--compressAtLayer", type=int, default=1, help='compress at this layer')
 parser.add_argument("--compressAtBlock", type=int, default=1, help='compress at this blockNum')
+parser.add_argument("--CRFValue", type=int, default=0, help='CRF Value')
 
 
 args = parser.parse_args()
@@ -136,7 +137,7 @@ def test(dataGen, model, criterion, epoch, device, dumpLayerOutput=False, trainD
             if model.checkpoints[key]:
                 files[key] = open(getFileName("LayerOutput_", key), "w")
                 print("file created {}".format(key))    
-        files["labels"] = open(getFileName("labels" + str(args.compressAtLayer) + "_" + str(args.compressAtBlock)), "w")
+        files["labels"] = open(getFileName("labels" + str(args.compressAtLayer) + "_" + str(args.compressAtBlock) + "_" + str(args.CRFValue)), "w")
     with torch.no_grad():
         for batchNum, (input, targets) in enumerate(dataGen):
             input, targets = input.to(device), targets.to(device)
@@ -228,15 +229,15 @@ def main():
 
     if args.arch == "resnet18":
         # model = ResNet18(32)
-        model = resnet18(pretrained=True, compressAtLayer=args.compressAtLayer, compressAtBlock=args.compressAtBlock)
+        model = resnet18(pretrained=True, compressAtLayer=args.compressAtLayer, compressAtBlock=args.compressAtBlock, CRFValue=args.CRFValue)
     elif args.arch == "resnet34":
-        model = resnet34(pretrained  = True, compressAtLayer=args.compressAtLayer, compressAtBlock=args.compressAtBlock)
+        model = resnet34(pretrained  = True, compressAtLayer=args.compressAtLayer, compressAtBlock=args.compressAtBlock, CRFValue=args.CRFValue)
     elif args.arch == "resnet50":
-        model = resnet50(pretrained  = True, compressAtLayer=args.compressAtLayer, compressAtBlock=args.compressAtBlock)
+        model = resnet50(pretrained  = True, compressAtLayer=args.compressAtLayer, compressAtBlock=args.compressAtBlock, CRFValue=args.CRFValue)
     elif args.arch == "resnet101":
-        model = resnet101(pretrained = True, compressAtLayer=args.compressAtLayer, compressAtBlock=args.compressAtBlock)
+        model = resnet101(pretrained = True, compressAtLayer=args.compressAtLayer, compressAtBlock=args.compressAtBlock, CRFValue=args.CRFValue)
     elif args.arch == "resnet152":
-        model = resnet152(pretrained = True, compressAtLayer=args.compressAtLayer, compressAtBlock=args.compressAtBlock)
+        model = resnet152(pretrained = True, compressAtLayer=args.compressAtLayer, compressAtBlock=args.compressAtBlock, CRFValue=args.CRFValue)
 
     model.to(device)
     # decide loss function

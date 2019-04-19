@@ -14,7 +14,7 @@ import wrap
 
 # preset : ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow, placebo
 PRESET_PARAMETER = 'ultrafast'
-CRF_VALUE = "0"
+CRF_VALUE = "20"
 
 
 def Inverse_BHW_Format(comp_data, b, h, w, init_c, init_h, init_w, img_per_row):
@@ -57,12 +57,14 @@ def Convert_BHW_Format(layerData):
 
 
 class CompressionLayer(nn.Module):
-    def __init__(self, fileName, returnCompressedTensor=False, compress=False):
+    def __init__(self, fileName, returnCompressedTensor=False, compress=False, CRFValue=0):
         super(CompressionLayer, self).__init__()
         self.fileName = fileName
         # pooling for downsample
         self.returnCompressedTensor = returnCompressedTensor
         self.compress = compress
+        self.CRFValue = str(CRFValue)
+        print("CRFValue : {}".format(self.CRFValue))
 
     def forward(self, x):
         
@@ -76,11 +78,11 @@ class CompressionLayer(nn.Module):
                 
                 try:
                     # comp_data is going to be one dimensional b*h
-                    comp_data = wrap.compress(data, data.min(), data.max(), b, h, w, "random", PRESET_PARAMETER, CRF_VALUE)
+                    comp_data = wrap.compress(data, data.min(), data.max(), b, h, w, "random", PRESET_PARAMETER, self.CRFValue)
                 except:
                     print("Going to Exception")
                     time.sleep(5)
-                    comp_data = wrap.compress(data, data.min(), data.max(), b, h, w, "random", PRESET_PARAMETER, CRF_VALUE)
+                    comp_data = wrap.compress(data, data.min(), data.max(), b, h, w, "random", PRESET_PARAMETER, self.CRFValue)
 
                 end = time.time()
                 
