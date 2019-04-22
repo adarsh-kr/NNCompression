@@ -14,6 +14,8 @@ import numpy as np
 from ResNet18 import *
 from Resnet import *
 from collections import Counter
+from PIL import ImageFile
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 # arguments
 parser=argparse.ArgumentParser(description='Custom PyTorch ImageNet Training')
@@ -54,6 +56,7 @@ parser.add_argument("--video_name", type=str, default="Lausanne", help='name of 
 parser.add_argument("--compressAtLayer", type=int, default=1, help='compress at this layer')
 parser.add_argument("--compressAtBlock", type=int, default=1, help='compress at this blockNum')
 parser.add_argument("--CRFValue", type=int, default=0, help='CRF Value')
+
 
 
 args = parser.parse_args()
@@ -138,13 +141,18 @@ def test(dataGen, model, criterion, epoch, device, dumpLayerOutput=False, trainD
                 files[key] = open(getFileName("LayerOutput_", key), "w")
                 print("file created {}".format(key))    
         files["labels"] = open(getFileName("labels" + str(args.compressAtLayer) + "_" + str(args.compressAtBlock) + "_" + str(args.CRFValue)), "w")
+        files["top5labels"] = open(getFileName("top5labels") + str(args.compressAtLayer) + "_" + str(args.compressAtBlock) + "_" + str(args.CRFValue), "w")
+    
     with torch.no_grad():
         for batchNum, (input, targets) in enumerate(dataGen):
+            if batchNum>=10:
+                break
             input, targets = input.to(device), targets.to(device)
             output = model(input)
             loss = criterion(output, targets)
             _, predicted = output.max(1)
             batchSize = output.size(0)
+            idx, topk = torch.topk(output, 5) 
             correctBatch = (predicted==targets).sum().item()
             total = total + batchSize
             correct = correct + correctBatch
@@ -152,13 +160,15 @@ def test(dataGen, model, criterion, epoch, device, dumpLayerOutput=False, trainD
             if dumpLayerOutput:
                 # save the labels once
                 if device.type == "cpu":
-                    print("Inside Inside Inside Inside Inside")
                     print(predicted)
-                    print(files["labels"])
+                    #print(files["labels"])
                     np.savetxt(files["labels"], predicted.view(batchSize, -1).numpy(), fmt='%1.1f', delimiter=',')
+                    np.savetxt(files["top5labels"], topk.view(batchSize, -1).numpy(), fmt="%1.1f", delimiter=",")
+
 
                 else:
                     np.savetxt(files["labels"], predicted.view(batchSize, -1).cpu().numpy(), fmt='%1.1f', delimiter=',')
+                    np.savetxt(files["top5labels"], topk.view(batchSize, -1).cpu().numpy(), fmt="%1.1f", delimiter=",")
 
                 for key in model.layerDumps.keys():
                     if device.type == "cpu":
