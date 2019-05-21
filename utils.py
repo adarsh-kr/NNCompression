@@ -2,8 +2,8 @@ import os
 import os.path
 import numpy as np
 from shutil import copyfile
-import subprocess
 import time
+import subprocess
 
 def BaselineVideoSize(dir, batchsize):
     files_path = sorted([dir + x for x in os.listdir(dir)])
